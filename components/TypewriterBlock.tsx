@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { audioSystem } from '../services/audioService';
 
 interface TypewriterBlockProps {
   text: string;
@@ -28,6 +29,12 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed =
            i += 2;
         } else {
            i += 1;
+           // Play sound for visible characters
+           const char = text.charAt(i-1);
+           if (char !== ' ' && char !== '\n') {
+              // Throttle sound slightly based on random to avoid audio clipping
+              if (Math.random() > 0.3) audioSystem.playTypingSound();
+           }
         }
         setDisplayedLength(i);
       } else {
@@ -38,6 +45,22 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed =
 
     return () => clearInterval(interval);
   }, [text, isLast, speed]);
+
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      if (isTyping) {
+        setDisplayedLength(text.length);
+        setIsTyping(false);
+      }
+    };
+
+    if (isTyping) {
+       // Timeout ensures it doesn't trigger on the same click that started the narrative
+       setTimeout(() => window.addEventListener('click', handleGlobalClick), 50);
+    }
+
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [isTyping, text.length]);
 
   const handleSkip = () => {
     if (isTyping) {

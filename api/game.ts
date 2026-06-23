@@ -175,6 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         - Describe la incomodidad, la temperatura, la textura del entorno o el olor del ambiente.
         - Sitúa al personaje en un escenario vívido y opresivo acorde a su arquetipo y su pasado (Bio).
         - Crea un inventario inicial lógico (1-4 items) integrado en la narración. Describe su estado material (óxido, desgaste, humedad).
+        - **IMPORTANTE: EL INVENTARIO DEBE SER ÚNICO Y BASADO ESTRICTAMENTE EN LA PROFESIÓN/PASADO.** No le des a todos los personajes los mismos items genéricos. Un caballero tendrá una espada mellada; un mendigo, un mendrugo de pan con moho; un cirujano, sus herramientas manchadas. Jamás incluyas Láudano a menos que el personaje sea explícitamente un médico, alquimista o adicto.
         - **CIERRE DEL TURNO**: Termina tu narración de forma natural. Presenta el entorno y deja que el jugador decida su primer paso. NO fuerces un evento de acción inmediato ni un "cliffhanger" barato (como un ruido repentino o un monstruo apareciendo). El terror y la tensión deben cocinarse a fuego lento.
 
         DESARROLLO POSTERIOR:

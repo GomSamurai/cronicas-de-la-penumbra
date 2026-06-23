@@ -346,32 +346,46 @@ class AudioService {
   // --- LAYER 3: PIANO (Procedural Dark Keys) ---
   private startPiano() {
     if (!this.ctx || !this.layerGains.piano) return;
-    const playNote = () => {
+    const playPhrase = () => {
        if (!this.ctx || this.layerMuted.piano) return;
        if (Math.random() > 0.4) return; 
+       
        const now = this.ctx.currentTime;
-       const osc = this.ctx.createOscillator();
-       const gain = this.ctx.createGain();
-       osc.type = 'sine';
-       const freq = this.baseFreqs[Math.floor(Math.random() * this.baseFreqs.length)] * (Math.random() > 0.7 ? 4 : 2);
-       osc.frequency.value = freq;
-       gain.gain.setValueAtTime(0, now);
-       gain.gain.linearRampToValueAtTime(0.15, now + 0.02); 
-       gain.gain.exponentialRampToValueAtTime(0.001, now + 4); 
-       osc.connect(gain);
-       const delay = this.ctx.createDelay();
-       delay.delayTime.value = 0.4;
-       const feedback = this.ctx.createGain();
-       feedback.gain.value = 0.3;
-       gain.connect(delay);
-       delay.connect(feedback);
-       feedback.connect(delay);
-       delay.connect(this.layerGains.piano!);
-       gain.connect(this.layerGains.piano!); 
-       osc.start();
-       osc.stop(now + 5);
+       const numNotes = 2 + Math.floor(Math.random() * 2);
+       let timeOffset = 0;
+       
+       for(let i=0; i<numNotes; i++) {
+           const osc = this.ctx.createOscillator();
+           const gain = this.ctx.createGain();
+           osc.type = 'sine';
+           const freq = this.baseFreqs[Math.floor(Math.random() * this.baseFreqs.length)] * (Math.random() > 0.7 ? 4 : 2);
+           osc.frequency.value = freq;
+           
+           gain.gain.setValueAtTime(0, now + timeOffset);
+           gain.gain.linearRampToValueAtTime(0.15, now + timeOffset + 0.05); 
+           gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 3); 
+           
+           osc.connect(gain);
+           
+           const delay = this.ctx.createDelay();
+           delay.delayTime.value = 0.4;
+           const feedback = this.ctx.createGain();
+           feedback.gain.value = 0.3;
+           
+           gain.connect(delay);
+           delay.connect(feedback);
+           feedback.connect(delay);
+           
+           delay.connect(this.layerGains.piano!);
+           gain.connect(this.layerGains.piano!); 
+           
+           osc.start(now + timeOffset);
+           osc.stop(now + timeOffset + 4);
+           
+           timeOffset += 0.8 + Math.random() * 0.5;
+       }
     };
-    this.pianoInterval = window.setInterval(playNote, 2500); 
+    this.pianoInterval = window.setInterval(playPhrase, 6000); 
   }
 
   // --- LAYER 4: TEXTURE (Materia) ---
@@ -484,6 +498,32 @@ class AudioService {
         osc.start();
         osc.stop(now + 2.1);
     });
+  }
+
+  public playTypingSound() {
+    if (!this.ctx || !this.masterGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.value = 50 + Math.random() * 50;
+    
+    filter.type = 'bandpass';
+    filter.frequency.value = 1500 + Math.random() * 1500;
+    filter.Q.value = 1.0;
+    
+    const now = this.ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.015 * (this.isMutedState ? 0.2 : this.masterVolumeValue), now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.06);
   }
 }
 

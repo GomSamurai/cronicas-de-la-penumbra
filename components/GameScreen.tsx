@@ -805,7 +805,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                    {item.tags && item.tags.length > 0 && (
                                      <div className="flex flex-wrap gap-1 ml-4 mt-1">
                                        {item.tags.map((tag, tIdx) => (
-                                          <span key={tIdx} className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-500 bg-black/40">
+                                          <span key={tIdx} className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-300 bg-zinc-900/80">
                                             {tag}
                                           </span>
                                        ))}
@@ -829,8 +829,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                          <div key={i} onClick={() => handleThreadClick(thread.id)} className={`bg-black/20 border transition-all duration-300 p-3 rounded-lg flex items-start gap-3 cursor-pointer group ${selectedThreadId === thread.id ? 'border-gold bg-white/5' : 'border-gold-dim/20 hover:border-gold-dim hover:bg-white/5'}`}>
                             <span className={`text-xs mt-1 transition-colors ${selectedThreadId === thread.id ? 'text-gold' : 'text-zinc-600 group-hover:text-gold'}`}>✦</span>
                             <div>
-                               <p className={`font-display font-bold text-sm tracking-wide transition-colors ${selectedThreadId === thread.id ? 'text-bone' : 'text-parchment'}`}>{thread.title}</p>
-                               <span className="text-[9px] text-zinc-500 uppercase tracking-widest group-hover:text-zinc-400">Activo</span>
+                               <p className={`font-display font-bold text-sm tracking-wide transition-colors ${selectedThreadId === thread.id ? 'text-bone drop-shadow' : 'text-parchment brightness-110'}`}>{thread.title}</p>
+                               <span className="text-[9px] text-zinc-400 uppercase tracking-widest group-hover:text-zinc-300">Activo</span>
                             </div>
                          </div>
                       ))}
@@ -843,7 +843,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                   <div className="space-y-4">
                      {gameState.worldFacts.map((fact, i) => (
                         <button key={i} onClick={() => scrollToTurn(fact.turnIndex)} className="block w-full text-left relative pl-3 border-l border-gold-dim/30 hover:border-gold transition-colors py-1 group focus:outline-none" title="Ver recuerdo">
-                           <p className="text-parchment-dim text-md italic font-serif leading-relaxed text-justify group-hover:text-parchment transition-colors">"{fact.text}"</p>
+                           <p className="text-parchment brightness-110 text-md italic font-serif leading-relaxed text-justify group-hover:text-bone transition-colors">"{fact.text}"</p>
                         </button>
                      ))}
                      {gameState.worldFacts.length === 0 && <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-4">Mente en blanco.</p>}
@@ -880,7 +880,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
             {activeItemObj.tags && activeItemObj.tags.length > 0 && (
                <div className="flex flex-wrap gap-2 mb-4">
                   {activeItemObj.tags.map((tag, tIdx) => (
-                    <span key={tIdx} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded border border-zinc-700 text-zinc-400 bg-void">
+                    <span key={tIdx} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded border border-zinc-600 text-zinc-200 bg-zinc-900">
                        {tag}
                     </span>
                   ))}
