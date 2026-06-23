@@ -264,9 +264,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
            - No recurras a "cliffhangers" forzados (como un ruido inoportuno o una sombra en la esquina) en cada turno para obligar al jugador a reaccionar. Que el peso de la decisión caiga en los hombros del jugador en un mundo indiferente.
 
         ---------------------------------------------------
-        SISTEMA DE DAÑO Y CORDURA:
-        - Si el jugador recibe daño, describe el impacto físico de forma clínica: el crujido del hueso, el desgarro del tejido, el sabor a sangre.
-        - Si pierde cordura, describe la erosión mental: confusión, desorientación, fallos de memoria o una percepción alterada de la realidad.
+        SISTEMA DE DAÑO Y CORDURA (MUY IMPORTANTE):
+        - **Daño Físico**: Si recibe daño, descríbelo de forma clínica: crujido de huesos, desgarro de tejido, sabor a sangre.
+        - **LEY DE LA CORDURA (SANITY)**: La Cordura representa el aguante mental y NO es un temporizador. NO reduzcas la cordura por el mero paso del tiempo o por la exploración normal.
+           * **Pérdida (Negativo)**: Resta cordura SOLO al enfrentarse a horrores innombrables, gore extremo, usar magia corrupta o desesperación profunda.
+           * **Recuperación (Positivo)**: El jugador RECUPERA cordura (+2, +5) si descansa en un lugar seguro, consume alcohol/drogas, fuma, o resuelve un misterio. ¡Premia las acciones que den esperanza o relajación!
+           * **Nota sobre Vicios**: Si usa drogas o alcohol para recuperar cordura, añade un pequeño 'Trauma' temporal para reflejar los efectos secundarios (ej. 'Ebrio: -2 Destreza').
+        - **Erosión Mental**: Cuando pierda cordura, describe la confusión, la paranoia o las alucinaciones.
         
         ---------------------------------------------------
         GESTIÓN DE INVENTARIO Y ESTADO:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { audioSystem } from '../services/audioService';
 
 interface TypewriterBlockProps {
@@ -10,6 +10,7 @@ interface TypewriterBlockProps {
 const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed = 12 }) => {
   const [displayedLength, setDisplayedLength] = useState(isLast ? 0 : text.length);
   const [isTyping, setIsTyping] = useState(isLast);
+  const intervalRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (!isLast) {
@@ -21,7 +22,10 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed =
     setDisplayedLength(0);
     setIsTyping(true);
     let i = 0;
-    const interval = setInterval(() => {
+    
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = window.setInterval(() => {
       // Type multiple characters at once if needed, but 1 is usually fine
       if (i < text.length) {
         // Skip markdown asterisks instantly so we don't type out formatting characters
@@ -38,17 +42,23 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed =
         }
         setDisplayedLength(i);
       } else {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         setIsTyping(false);
       }
     }, speed);
 
-    return () => clearInterval(interval);
+    return () => {
+       if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [text, isLast, speed]);
 
   useEffect(() => {
     const handleGlobalClick = () => {
       if (isTyping) {
+        if (intervalRef.current) {
+           clearInterval(intervalRef.current);
+           intervalRef.current = null;
+        }
         setDisplayedLength(text.length);
         setIsTyping(false);
       }
@@ -64,6 +74,10 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, speed =
 
   const handleSkip = () => {
     if (isTyping) {
+      if (intervalRef.current) {
+         clearInterval(intervalRef.current);
+         intervalRef.current = null;
+      }
       setDisplayedLength(text.length);
       setIsTyping(false);
     }
