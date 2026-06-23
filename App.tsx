@@ -15,6 +15,13 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Auto-Guardado Local
+  useEffect(() => {
+    if (gameState && (status === GameStatus.PLAYING || status === GameStatus.GAME_OVER)) {
+      localStorage.setItem('penumbra_save', JSON.stringify(gameState));
+    }
+  }, [gameState, status]);
+
   // Manage Audio Modes
   useEffect(() => {
     if (status === GameStatus.HOME || status === GameStatus.CHARACTER_CREATION) {
@@ -312,7 +319,34 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const handleLoadLocal = () => {
+    try {
+      const json = localStorage.getItem('penumbra_save');
+      if (json) {
+        const loadedState = JSON.parse(json);
+        if (loadedState.character && loadedState.narrativeHistory) {
+          // Migration logic from handleLoad
+          if (loadedState.inventory?.length > 0 && typeof loadedState.inventory[0] === 'string') {
+             loadedState.inventory = loadedState.inventory.map((name: string) => ({ name, description: "Un objeto antiguo...", tags: [] }));
+          }
+          if (!loadedState.diceLog) loadedState.diceLog = [];
+          if (!loadedState.activeThreads) loadedState.activeThreads = [];
+          if (!loadedState.traumas) loadedState.traumas = []; 
+          if (!loadedState.phobias) loadedState.phobias = [];
+          if (!loadedState.sessionTokens) loadedState.sessionTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+          if (!loadedState.lastTurnTokens) loadedState.lastTurnTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+
+          setGameState(loadedState as GameState);
+          setStatus(GameStatus.PLAYING);
+        }
+      }
+    } catch(err) {
+      console.error("Error al cargar partida local:", err);
+    }
+  };
+
   const handleReset = () => {
+    localStorage.removeItem('penumbra_save');
     setGameState(null);
     setStatus(GameStatus.HOME);
   };
@@ -324,7 +358,7 @@ const App: React.FC = () => {
 
     switch (status) {
       case GameStatus.HOME:
-        return <HomeScreen onNewGame={handleNewGame} onLoadGame={handleLoad} />;
+        return <HomeScreen onNewGame={handleNewGame} onLoadGame={handleLoad} onResumeLocal={handleLoadLocal} />;
       case GameStatus.CHARACTER_CREATION:
         return <StartScreen onStart={startGame} onBack={handleBackToHome} isLoading={isLoading} />;
       case GameStatus.PLAYING:
@@ -341,7 +375,7 @@ const App: React.FC = () => {
           />
         ) : null;
       default:
-        return <HomeScreen onNewGame={handleNewGame} onLoadGame={handleLoad} />;
+        return <HomeScreen onNewGame={handleNewGame} onLoadGame={handleLoad} onResumeLocal={handleLoadLocal} />;
     }
   };
 

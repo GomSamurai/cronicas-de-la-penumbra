@@ -5,17 +5,21 @@ import AudioController from './AudioController';
 interface HomeScreenProps {
   onNewGame: () => void;
   onLoadGame: (file: File) => void;
+  onResumeLocal?: () => void;
 }
 
 type ModalType = 'none' | 'manual' | 'about';
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
+  const [hasLocalSave, setHasLocalSave] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Attempt to set intro mode on mount
     audioSystem.setMode('intro');
+    if (localStorage.getItem('penumbra_save')) {
+       setHasLocalSave(true);
+    }
   }, []);
 
   const initAudio = () => {
@@ -26,6 +30,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame }) => {
   const handleNewGameWrapper = () => {
     initAudio();
     onNewGame();
+  };
+
+  const handleResumeWrapper = () => {
+    initAudio();
+    if (onResumeLocal) onResumeLocal();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,9 +100,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame }) => {
 
         {/* Menu Buttons */}
         <div className="flex flex-col gap-6 w-full max-w-xs">
+          {hasLocalSave && (
+            <button 
+              onClick={handleResumeWrapper}
+              className="px-8 py-4 bg-gold/10 border border-gold text-gold hover:bg-gold hover:text-void font-display tracking-[0.2em] uppercase font-bold transition-all duration-300 shadow-[0_0_20px_rgba(197,160,89,0.2)] hover:shadow-[0_0_30px_rgba(197,160,89,0.5)] rounded-xl relative overflow-hidden group"
+            >
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]"></span>
+              Continuar Vigilia
+            </button>
+          )}
+
           <button 
             onClick={handleNewGameWrapper}
-            className="px-8 py-4 border border-gold text-gold hover:bg-gold hover:text-void font-display tracking-[0.2em] uppercase transition-all duration-300 shadow-[0_0_20px_rgba(197,160,89,0.1)] hover:shadow-[0_0_30px_rgba(197,160,89,0.4)] rounded-xl"
+            className={`px-8 py-4 border font-display tracking-[0.2em] uppercase transition-all duration-300 rounded-xl ${hasLocalSave ? 'border-zinc-700 text-parchment-dim hover:border-parchment hover:text-parchment' : 'border-gold text-gold hover:bg-gold hover:text-void shadow-[0_0_20px_rgba(197,160,89,0.1)] hover:shadow-[0_0_30px_rgba(197,160,89,0.4)]'}`}
           >
             Nueva Vigilia
           </button>

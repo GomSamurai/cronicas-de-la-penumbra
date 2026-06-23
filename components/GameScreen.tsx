@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread } from '../types';
+import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia } from '../types';
 import { audioSystem } from '../services/audioService';
+import TypewriterBlock from './TypewriterBlock';
 import { exportStoryToPDF } from '../services/exportService';
 import AudioController from './AudioController';
 
@@ -419,25 +420,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
     }
   };
 
-  const renderText = (text: string, isLast: boolean) => {
-    const paragraphs = text.split('\n').filter(p => p.trim());
-    return paragraphs.map((paragraph, idx) => {
-      const isFirstOfBlock = idx === 0;
-      const dropCapClass = (isFirstOfBlock && isLast) ? 'drop-cap' : '';
-      const parts = paragraph.split(/(\*\*.*?\*\*)/g);
-      return (
-        <p key={idx} className={`mb-6 text-xl leading-relaxed text-parchment font-serif tracking-wide text-justify ${dropCapClass}`}>
-          {parts.map((part, i) => {
-            if (part.startsWith('**') && part.endsWith('**')) {
-              return <strong key={i} className="text-bone font-bold drop-shadow-sm">{part.slice(2, -2)}</strong>;
-            }
-            return part;
-          })}
-        </p>
-      );
-    });
-  };
-
   const hpPercent = Math.min(100, (gameState.hp / gameState.maxHp) * 100);
   const sanityPercent = Math.min(100, gameState.sanity); 
   const cleanArchetype = (fullStr: string) => fullStr.split('(')[0].trim();
@@ -696,7 +678,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                     return (
                       <div key={index} ref={el => { turnRefs.current[index] = el; if (isLast) lastTurnRef.current = el; }} className={`mb-12 transition-all duration-1000 p-4 rounded-xl ${!isLast ? 'opacity-70' : 'opacity-100 animate-fade-in'}`}>
                          {isLast && index > 0 && <div className="flex justify-center mb-10 opacity-40"><div className="text-gold-dim text-xl">❖</div></div>}
-                         {renderText(turn.narrative, isLast)}
+                         <TypewriterBlock text={turn.narrative} isLast={isLast} />
                       </div>
                     );
                   })}
