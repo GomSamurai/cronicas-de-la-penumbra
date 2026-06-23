@@ -2,6 +2,8 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { Character, AIResponseSchema, GameState, ServiceResponse, TokenUsage } from "../types";
 
+export const maxDuration = 30; // Evita el timeout de 10s de Vercel (máximo en plan gratuito es 60s, pero 30s es seguro)
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const MODEL_NAME = 'gemini-2.5-flash';
 

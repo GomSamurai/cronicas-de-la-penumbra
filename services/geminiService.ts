@@ -11,7 +11,12 @@ export const startAdventure = async (character: Character): Promise<ServiceRespo
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+      let errMsg = response.statusText;
+      try {
+         const errData = await response.json();
+         if (errData.error) errMsg = errData.error;
+      } catch (e) {}
+      throw new Error(errMsg);
     }
 
     const result = await response.json();
@@ -37,7 +42,12 @@ export const nextTurn = async (
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+      let errMsg = response.statusText;
+      try {
+         const errData = await response.json();
+         if (errData.error) errMsg = errData.error;
+      } catch (e) {}
+      throw new Error(errMsg);
     }
 
     const result = await response.json();
