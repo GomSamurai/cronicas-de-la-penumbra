@@ -54,7 +54,9 @@ const App: React.FC = () => {
         maxHp: INITIAL_HP,
         sanity: INITIAL_SANITY,
         inventory: [], 
-        worldFacts: [],
+        worldFacts: [
+          { text: `Identidad: ${character.archetype}. Pasado: ${character.bio}`, turnIndex: 0 }
+        ],
         activeThreads: [],
         traumas: [], 
         phobias: [], 
@@ -91,7 +93,7 @@ const App: React.FC = () => {
         narrativeHistory: [introTurn],
         currentTurn: introTurn,
         history: [{ role: 'model', content: response.narrative }],
-        worldFacts: newFacts,
+        worldFacts: [...initial.worldFacts, ...newFacts],
         activeThreads: initialThreads,
         traumas: initialTraumas,
         phobias: initialPhobias,

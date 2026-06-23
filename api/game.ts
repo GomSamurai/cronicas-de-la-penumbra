@@ -5,7 +5,7 @@ import type { Character, AIResponseSchema, GameState, ServiceResponse, TokenUsag
 export const maxDuration = 30; // Evita el timeout de 10s de Vercel (máximo en plan gratuito es 60s, pero 30s es seguro)
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-1.5-flash';
 
 // Defines the strict JSON structure we expect from the AI Game Engine
 const responseSchema: Schema = {
@@ -173,14 +173,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         OBJETIVOS DEL TURNO 1 (ESTABLECIMIENTO):
         - Dedica este primer turno SÓLO a establecer la atmósfera, el lugar y la fisicalidad del personaje.
         - Describe la incomodidad, la temperatura, la textura del entorno o el olor del ambiente.
-        - Sitúa al personaje en un escenario vívido y opresivo acorde a su arquetipo y su pasado (Bio).
+        - **HILO CONDUCTOR Y CONTEXTO (CRUCIAL)**: Sitúa al personaje en un escenario vívido que esté **ESTRICTAMENTE RELACIONADO** con su pasado (Bio) y su arquetipo. El inicio de la historia debe tener sentido absoluto para quién es. Presenta sutilmente el detonante (por qué está ahí o qué tragedia le acaba de ocurrir), estableciendo un hilo argumental central coherente que sirva de guía, aunque luego el jugador decida hacer otras cosas.
         - Crea un inventario inicial lógico (1-4 items) integrado en la narración. Describe su estado material (óxido, desgaste, humedad).
         - **IMPORTANTE: EL INVENTARIO DEBE SER ÚNICO Y BASADO ESTRICTAMENTE EN LA PROFESIÓN/PASADO.** No le des a todos los personajes los mismos items genéricos. Un caballero tendrá una espada mellada; un mendigo, un mendrugo de pan con moho; un cirujano, sus herramientas manchadas. Jamás incluyas Láudano a menos que el personaje sea explícitamente un médico, alquimista o adicto.
         - **CIERRE DEL TURNO**: Termina tu narración de forma natural. Presenta el entorno y deja que el jugador decida su primer paso. NO fuerces un evento de acción inmediato ni un "cliffhanger" barato (como un ruido repentino o un monstruo apareciendo). El terror y la tensión deben cocinarse a fuego lento.
 
         DESARROLLO POSTERIOR:
         - La trama debe desvelarse orgánicamente. Deja que el jugador asimile la atmósfera e investigue antes de presentar conflictos letales o el objetivo principal.
-        - Las opciones que ofrezcas (suggestedActions) deben ser pragmáticas, lógicas y adaptadas al entorno. No todas deben ser obvias ni heroicas.
+        - **CALIDAD DE LAS OPCIONES (suggestedActions)**: Las opciones deben ser relevantes, avanzar la historia o invitar a investigar pistas cruciales. Está PROHIBIDO ofrecer acciones triviales, aburridas o inútiles (ej. "Beber agua", "Mirar una pared", "Esperar"). Cada opción debe tener un propósito narrativo interesante.
 
         ----------------------------------------------------------------------
         OBJETIVOS DEL JUEGO (FIN DE LA AVENTURA):
@@ -257,12 +257,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
            - Escribe con calidad excepcional. La violencia es dolorosa, sucia y carente de gloria. Las personas son egoístas y complejas.
            - Emplea el "Show, don't tell". No digas "el monstruo da miedo", describe su anatomía aberrante, su olor a podredumbre y cómo se mueve.
            - Adapta la longitud de tus respuestas al momento: usa párrafos largos y detallados para la exploración o la calma tensa; usa frases cortas y contundentes para el combate y el pánico.
+           - **CONCISIÓN EN LO MUNDANO (LEY ESTRICTA)**: Si el personaje encuentra un objeto común (una aguja, una moneda) o bebe agua, **sé extremadamente directo y conciso (1 o 2 frases máximo)**. Está TERMINANTEMENTE PROHIBIDO escribir grandes parrafadas literarias, poéticas o dramáticas para describir una simple aguja o el acto de beber agua normal. Reserva el lenguaje extenso para descubrimientos terroríficos, combates o giros clave.
 
         3. **PERSPECTIVA Y TIEMPO (LEY ABSOLUTA)**:
            - Tienes que escribir SIEMPRE en segunda persona del singular y en tiempo PRESENTE ("Miras a tu alrededor", "El frío cala tus huesos", "Esquivas el golpe").
            - ESTÁ TOTALMENTE PROHIBIDO usar la tercera persona o el tiempo pasado ("Barnaby se arrastró", "Miró a su alrededor"). Dirígete directamente al jugador como el protagonista que lo está viviendo AHORA.
 
-        4. **FINALES DE TURNO NATURALES**:
+        4. **CALIDAD Y COHERENCIA DE OPCIONES (suggestedActions)**:
+           - Las opciones deben avanzar la trama, plantear un dilema, o invitar a una investigación relevante. Deben ser **INTERESANTES** para la historia.
+           - ESTÁ PROHIBIDO sugerir acciones triviales, aburridas o inútiles (ej. "Beber agua", "Mirar un cuchillo", "Esperar sin motivo"). Cada opción debe tener peso narrativo.
+           - Las opciones no tienen que estar limitadas rígidamente a lo recién descrito; pueden proponer acciones que sean lógicas, obvias o naturales dado el contexto (ej: "Buscar una salida", "Registrar los muebles en busca de pistas", "Avanzar por el pasillo"), siempre que mantengan la coherencia y relevancia de la historia.
+
+        5. **FINALES DE TURNO NATURALES**:
            - **VARIEDAD**: No uses la misma fórmula para terminar tus respuestas. 
            - Deja que las acciones concluyan de forma lógica. A veces un turno termina simplemente porque una puerta está cerrada, porque empieza a llover o porque el personaje necesita descansar. 
            - No recurras a "cliffhangers" forzados (como un ruido inoportuno o una sombra en la esquina) en cada turno para obligar al jugador a reaccionar. Que el peso de la decisión caiga en los hombros del jugador en un mundo indiferente.

@@ -56,6 +56,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const bottomControlsRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const itemChatInputRef = useRef<HTMLInputElement>(null);
+  const hasSavedDeathRef = useRef(false);
   const diceSectionRef = useRef<HTMLDivElement>(null);
   
   const turnRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -212,6 +213,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
     setItemChatInput('');
     setSelectedThreadId(null);
   }, [gameState.turnCount]);
+
+  useEffect(() => {
+    if (isDead && !hasSavedDeathRef.current) {
+      hasSavedDeathRef.current = true;
+      try {
+        const graveyard = JSON.parse(localStorage.getItem('penumbra_graveyard') || '[]');
+        const id = gameState.character.name + '_' + Date.now();
+        graveyard.unshift({
+           id: id,
+           name: gameState.character.name,
+           archetype: gameState.character.archetype,
+           turns: gameState.turnCount,
+           date: new Date().toISOString(),
+           lastWords: gameState.narrativeHistory[gameState.narrativeHistory.length - 1]?.narrative.substring(0, 150) + '...'
+        });
+        localStorage.setItem('penumbra_graveyard', JSON.stringify(graveyard));
+        localStorage.removeItem('penumbra_save');
+      } catch(e) { console.error("Error guardando epitafio", e); }
+    }
+  }, [isDead, gameState]);
 
   useEffect(() => {
     if (!isLoading && mobileTab === 'narrative' && scrollContainerRef.current) {
@@ -711,7 +732,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                         </div>
                       </div>
                       {rollResult === null ? (
-                         <button onClick={(e) => { e.stopPropagation(); handleRollDice(e); }} disabled={diceRolling} className="bg-gold text-void px-8 py-3 rounded-lg font-display font-bold uppercase tracking-widest hover:scale-105 transition-transform disabled:opacity-50 w-full">{diceRolling ? "El destino gira..." : "Lanzar D20"}</button>
+                         diceRolling ? (
+                            <div className="animate-fade-in w-full flex flex-col items-center py-4">
+                              <div className="w-20 h-20 border border-gold rounded-xl flex items-center justify-center animate-spin-fast shadow-[0_0_20px_rgba(197,160,89,0.8)] bg-gold/10 overflow-hidden relative">
+                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-gold/30 to-transparent animate-pulse-fast"></div>
+                                 <span className="text-4xl font-display text-white animate-pulse-fast">?</span>
+                              </div>
+                              <p className="mt-6 text-gold tracking-[0.3em] uppercase text-xs animate-pulse font-display">Los huesos dictan sentencia...</p>
+                            </div>
+                         ) : (
+                            <button onClick={(e) => { e.stopPropagation(); handleRollDice(e); }} disabled={diceRolling} className="bg-gold text-void px-8 py-3 rounded-lg font-display font-bold uppercase tracking-widest hover:scale-105 transition-transform disabled:opacity-50 w-full">Lanzar D20</button>
+                         )
                       ) : (
                          <div className="animate-fade-in w-full">
                             <div className={`bg-panel border rounded-lg p-4 mb-4 relative overflow-hidden ${resultInfo?.color.includes('gold') ? 'border-gold shadow-[0_0_15px_rgba(197,160,89,0.3)]' : 'border-blood-bright shadow-[0_0_15px_rgba(255,85,85,0.3)]'}`}>

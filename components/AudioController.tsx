@@ -14,7 +14,10 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
     drone: false,
     orchestra: false,
     piano: false,
-    texture: false
+    texture: false,
+    chimes: false,
+    choir: false,
+    subbass: false
   });
 
   // Initialize checks
@@ -26,7 +29,10 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
       drone: audioSystem.isLayerMuted('drone'),
       orchestra: audioSystem.isLayerMuted('orchestra'),
       piano: audioSystem.isLayerMuted('piano'),
-      texture: audioSystem.isLayerMuted('texture')
+      texture: audioSystem.isLayerMuted('texture'),
+      chimes: audioSystem.isLayerMuted('chimes'),
+      choir: audioSystem.isLayerMuted('choir'),
+      subbass: audioSystem.isLayerMuted('subbass')
     });
   }, [isOpen]);
 
@@ -76,7 +82,7 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
     }
   };
 
-  const toggleLayer = (layer: 'drone' | 'orchestra' | 'piano' | 'texture') => {
+  const toggleLayer = (layer: 'drone' | 'orchestra' | 'piano' | 'texture' | 'chimes' | 'choir' | 'subbass') => {
     const muted = audioSystem.toggleLayer(layer);
     setMutedLayers(prev => ({ ...prev, [layer]: muted }));
     audioSystem.playClick();
@@ -191,12 +197,15 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
             className="w-full h-1 bg-void rounded-lg appearance-none cursor-pointer accent-gold"
           />
        </div>
-       <div className="space-y-2">
+       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
           {[
             { id: 'drone', label: 'Vacío (Drone)' },
             { id: 'orchestra', label: 'Orquesta' },
             { id: 'piano', label: 'Ecos (Piano)' },
             { id: 'texture', label: 'Materia' },
+            { id: 'chimes', label: 'Cristal (Chimes)' },
+            { id: 'choir', label: 'Lamentos (Choir)' },
+            { id: 'subbass', label: 'Graves (Subbass)' },
           ].map((layer) => (
              <button
                 key={layer.id}

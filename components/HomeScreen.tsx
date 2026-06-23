@@ -8,11 +8,12 @@ interface HomeScreenProps {
   onResumeLocal?: () => void;
 }
 
-type ModalType = 'none' | 'manual' | 'about';
+type ModalType = 'none' | 'manual' | 'about' | 'graveyard';
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [hasLocalSave, setHasLocalSave] = useState(false);
+  const [graveyardData, setGraveyardData] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -20,6 +21,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
     if (localStorage.getItem('penumbra_save')) {
        setHasLocalSave(true);
     }
+    try {
+      const grav = localStorage.getItem('penumbra_graveyard');
+      if (grav) setGraveyardData(JSON.parse(grav));
+    } catch(e) {}
   }, []);
 
   const initAudio = () => {
@@ -129,6 +134,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Manual</button>
              <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Proyecto</button>
+             {graveyardData.length > 0 && (
+                <>
+                  <span className="text-zinc-800">•</span>
+                  <button onClick={(e) => { e.stopPropagation(); setActiveModal('graveyard'); }} className="text-xs uppercase tracking-widest text-blood-bright hover:text-red-400 transition-colors">Panteón</button>
+                </>
+             )}
           </div>
         </div>
       </div>
@@ -245,6 +256,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
                    "Aquel que mira largo tiempo al abismo, ve cómo el abismo mira dentro de él."
                  </p>
               </div>
+            )}
+
+            {activeModal === 'graveyard' && (
+             <div className="text-left font-serif">
+                <h2 className="text-3xl font-display text-blood-bright mb-6 tracking-widest uppercase border-b border-blood-bright/30 pb-4">El Panteón</h2>
+                {graveyardData.length === 0 ? (
+                   <p className="text-parchment-dim italic text-center py-8">El cementerio aguarda su primera lápida.</p>
+                ) : (
+                   <div className="space-y-4">
+                      {graveyardData.map((soul) => (
+                         <div key={soul.id} className="bg-blood/5 border border-blood/20 p-4 rounded-lg flex flex-col gap-2 relative">
+                            <div className="flex justify-between items-start">
+                               <h3 className="text-xl font-display text-bone">{soul.name}</h3>
+                               <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">{new Date(soul.date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-gold-dim">
+                               <span>{soul.archetype}</span>
+                               <span>Sobrevivió {soul.turns} pasajes</span>
+                            </div>
+                            <p className="text-sm italic text-parchment-dim border-t border-blood/10 pt-3 mt-2 opacity-80 leading-relaxed">"{soul.lastWords}"</p>
+                         </div>
+                      ))}
+                   </div>
+                )}
+             </div>
             )}
           </div>
         </div>
