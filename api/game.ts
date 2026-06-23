@@ -5,7 +5,7 @@ import type { Character, AIResponseSchema, GameState, ServiceResponse, TokenUsag
 export const maxDuration = 30; // Evita el timeout de 10s de Vercel (máximo en plan gratuito es 60s, pero 30s es seguro)
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-2.5-flash-lite';
 
 // Defines the strict JSON structure we expect from the AI Game Engine
 const responseSchema: Schema = {
