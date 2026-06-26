@@ -60,6 +60,8 @@ const App: React.FC = () => {
         activeThreads: [],
         traumas: [], 
         phobias: [], 
+        environmentContext: "La aventura comienza. Asegúrate de establecer claramente dónde se encuentra el personaje.",
+
         turnCount: 0,
         pendingChallenge: null,
         diceLog: [],
@@ -250,6 +252,8 @@ const App: React.FC = () => {
           activeThreads: updatedThreads,
           traumas: updatedTraumas,
           phobias: updatedPhobias,
+          environmentContext: response.environmentContext || prevState.environmentContext,
+
           history: newContextHistory,
           narrativeHistory: newNarrativeHistory,
           currentTurn: newTurn,
@@ -303,6 +307,8 @@ const App: React.FC = () => {
           if (!loadedState.activeThreads) loadedState.activeThreads = [];
           if (!loadedState.traumas) loadedState.traumas = []; 
           if (!loadedState.phobias) loadedState.phobias = [];
+          if (!loadedState.environmentContext) loadedState.environmentContext = "";
+
           
           // Migration: Token Tracking defaults
           if (!loadedState.sessionTokens) loadedState.sessionTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
@@ -335,6 +341,8 @@ const App: React.FC = () => {
           if (!loadedState.activeThreads) loadedState.activeThreads = [];
           if (!loadedState.traumas) loadedState.traumas = []; 
           if (!loadedState.phobias) loadedState.phobias = [];
+          if (!loadedState.environmentContext) loadedState.environmentContext = "";
+
           if (!loadedState.sessionTokens) loadedState.sessionTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
           if (!loadedState.lastTurnTokens) loadedState.lastTurnTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
 

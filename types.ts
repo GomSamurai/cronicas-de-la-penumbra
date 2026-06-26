@@ -106,6 +106,8 @@ export interface GameState {
   // New State Fields
   traumas: Trauma[];
   phobias: Phobia[];
+  environmentContext: string;
+
 
   turnCount: number;
   pendingChallenge: Challenge | null;
@@ -142,6 +144,7 @@ export interface AIResponseSchema {
   resolvedTraumas?: string[]; // IDs to remove
   newPhobias?: Phobia[];
   resolvedPhobias?: string[]; // IDs to remove
+  environmentContext?: string; // New: AI internal spatial/situational memory
 
   suggestedActions: string[];
   isGameOver: boolean;

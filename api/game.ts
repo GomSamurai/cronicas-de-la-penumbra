@@ -97,7 +97,9 @@ const responseSchema: Schema = {
       description: "Fobias o psicosis si Cordura < 30%.",
     },
     resolvedPhobias: { type: Type.ARRAY, items: { type: Type.STRING }, description: "IDs de fobias superadas." },
+    environmentContext: { type: Type.STRING, description: "Notas internas EXCLUSIVAS PARA LA IA. Úsalas para recordar DÓNDE está exactamente el personaje, el tipo de terreno (interior/exterior), salidas posibles y estado de las mismas (ej: 'Habitación cerrada, puerta bloqueada, sin ventanas'). ACTUALIZA este valor en CADA turno para reflejar la posición espacial actual y evitar incoherencias geográficas." },
     suggestedActions: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Opciones." },
+
     isGameOver: { type: Type.BOOLEAN, description: "True si muere." },
     challenge: {
       type: Type.OBJECT,
@@ -177,6 +179,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         - Crea un inventario inicial lógico (1-4 items) integrado en la narración. Describe su estado material (óxido, desgaste, humedad).
         - **IMPORTANTE: EL INVENTARIO DEBE SER ÚNICO Y BASADO ESTRICTAMENTE EN LA PROFESIÓN/PASADO.** No le des a todos los personajes los mismos items genéricos. Un caballero tendrá una espada mellada; un mendigo, un mendrugo de pan con moho; un cirujano, sus herramientas manchadas. Jamás incluyas Láudano a menos que el personaje sea explícitamente un médico, alquimista o adicto.
         - **CIERRE DEL TURNO**: Termina tu narración de forma natural. Presenta el entorno y deja que el jugador decida su primer paso. NO fuerces un evento de acción inmediato ni un "cliffhanger" barato (como un ruido repentino o un monstruo apareciendo). El terror y la tensión deben cocinarse a fuego lento.
+        - **MEMORIA ESPACIAL (environmentContext)**: Rellena el campo 'environmentContext' del JSON con las características físicas exactas de donde lo acabas de situar (interior/exterior, clima, salidas, barreras).
 
         DESARROLLO POSTERIOR:
         - La trama debe desvelarse orgánicamente. Deja que el jugador asimile la atmósfera e investigue antes de presentar conflictos letales o el objetivo principal.
@@ -222,7 +225,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         activeThreads: currentState.activeThreads.map(t => ({ id: t.id, title: t.title, desc: t.description })), 
         character: currentState.character,
         currentTraumas: currentState.traumas || [], 
-        currentPhobias: currentState.phobias || []
+        currentPhobias: currentState.phobias || [],
+        environmentContext: currentState.environmentContext || "Desconocido"
       };
 
       const prompt = `
@@ -294,7 +298,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         - Si la acción es arriesgada y el resultado incierto, genera un 'challenge'. DC Base: 15. Medio: 25. Difícil: 35.
 
         ---------------------------------------------------
-        COHERENCIA Y CONSECUENCIAS:
+        COHERENCIA Y CONSECUENCIAS (MEMORIA ESPACIAL):
+        - **Entorno Actual ('environmentContext' del CONTEXTO MECÁNICO)**: Este campo contiene tus notas internas del lugar exacto donde está el personaje. LÉELO antes de narrar. Si está encerrado en una habitación, NO puede estar de repente en un prado con hierba sin haber abierto la puerta y salido.
+        - **Actualización**: Si el jugador cambia de habitación o ubicación en este turno, ACTUALIZA tu propio campo 'environmentContext' en la respuesta JSON para reflejar el nuevo lugar. Si no se mueve, mantén o amplía la descripción del lugar actual. Mantén un registro estricto de salidas, barreras y luces.
         - Mantén un registro mental estricto del entorno. Si el jugador soltó una antorcha, la sala está a oscuras. Si tiene una pierna rota, no puede correr.
 
         ---------------------------------------------------
