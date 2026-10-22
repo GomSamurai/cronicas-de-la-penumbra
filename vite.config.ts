@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
     // const env = loadEnv(mode, '.', ''); // Ya no hace falta cargar el .env aquí manualmente para inyectarlo en el cliente
     return {
       server: {
-        port: 3000,
+        port: 3333,
         host: '0.0.0.0',
       },
       plugins: [react()],
