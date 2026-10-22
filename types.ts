@@ -23,9 +23,12 @@ export interface Character {
   bio: string;
 }
 
+export type TensionLevel = 'calma' | 'sospecha' | 'tension' | 'peligro' | 'combate' | 'agonico';
+
 export interface TurnData {
   narrative: string;
   suggestedActions: string[];
+  tensionLevel?: TensionLevel;
 }
 
 export interface WorldFact {
@@ -38,6 +41,34 @@ export interface NarrativeThread {
   title: string;
   description: string; // New: Contextual description of the thread
   status: 'active' | 'resolved';
+}
+
+// --- DRAMATIS PERSONAE (SISTEMA DE PNJS) ---
+export type NpcStatus = 'vivo' | 'herido' | 'inconsciente' | 'muerto' | 'desaparecido';
+export type NpcRelationship = 'aliado' | 'favorable' | 'neutral' | 'sospechoso' | 'hostil' | 'enemigo_mortal';
+
+export interface NPC {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  status: NpcStatus;
+  relationship: NpcRelationship;
+  notes?: string;
+  location?: string;
+}
+
+// --- CARTOGRAFÍA MENTAL (UBICACIONES) ---
+export type LocationLighting = 'oscuridad_total' | 'penumbra' | 'antorchas' | 'luz_de_dia';
+export type LocationDanger = 'seguro' | 'inquietante' | 'letal';
+
+export interface LocationInfo {
+  id: string;
+  name: string;
+  description: string;
+  lighting: LocationLighting;
+  dangerLevel: LocationDanger;
+  exits: string[];
 }
 
 // --- NEW AFFLICTION SYSTEM ---
@@ -107,7 +138,12 @@ export interface GameState {
   traumas: Trauma[];
   phobias: Phobia[];
   environmentContext: string;
+  tensionLevel?: TensionLevel;
 
+  // Dramatis Personae & Cartografía
+  npcs: NPC[];
+  currentLocation?: LocationInfo;
+  visitedLocations: string[];
 
   turnCount: number;
   pendingChallenge: Challenge | null;
@@ -145,6 +181,21 @@ export interface AIResponseSchema {
   newPhobias?: Phobia[];
   resolvedPhobias?: string[]; // IDs to remove
   environmentContext?: string; // New: AI internal spatial/situational memory
+  tensionLevel?: TensionLevel; // Dynamic dramatic pacing
+
+  // Dramatis Personae & Ubicación
+  newNpcs?: NPC[];
+  npcUpdates?: {
+    id: string;
+    name?: string;
+    role?: string;
+    description?: string;
+    status?: NpcStatus;
+    relationship?: NpcRelationship;
+    notes?: string;
+    location?: string;
+  }[];
+  locationUpdate?: LocationInfo;
 
   suggestedActions: string[];
   isGameOver: boolean;

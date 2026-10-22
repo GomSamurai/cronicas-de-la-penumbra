@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia } from '../types';
+import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, NPC, LocationInfo } from '../types';
 import { audioSystem } from '../services/audioService';
 import TypewriterBlock from './TypewriterBlock';
 import { exportStoryToPDF } from '../services/exportService';
@@ -17,12 +17,22 @@ interface GameScreenProps {
 
 type MobileTab = 'character' | 'narrative' | 'inventory';
 
+const LOADING_WHISPERS = [
+  "Los hilos del destino se anudan en la penumbra...",
+  "La oscuridad sopesa las consecuencias de tu elección...",
+  "El eco de tus pasos despierta a los durmientes...",
+  "Las sombras reescriben los designios del azar...",
+  "El hierro y la sangre aguardan el desenlace...",
+  "Un suspiro gélido recorre los pasillos olvidados..."
+];
+
 const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegisterDiceRoll, isLoading, onSave, onLoad, onReset }) => {
   const [customInput, setCustomInput] = useState('');
   const [showOptions, setShowOptions] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('narrative');
   const [showExitModal, setShowExitModal] = useState(false);
   const [showDiceLog, setShowDiceLog] = useState(false);
+  const [whisperIdx, setWhisperIdx] = useState(0);
   
   // Inventory Interaction State
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -32,6 +42,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
   // Thread Interaction State
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+
+  // Dramatis Personae (NPC) State
+  const [selectedNpcId, setSelectedNpcId] = useState<string | null>(null);
+  const [showNpcChat, setShowNpcChat] = useState(false);
+  const [npcChatInput, setNpcChatInput] = useState('');
+  const [rightTab, setRightTab] = useState<'inventory' | 'npcs' | 'codex'>('inventory');
+  const npcChatInputRef = useRef<HTMLInputElement>(null);
 
   // Dice Rolling State
   const [diceRolling, setDiceRolling] = useState(false);
@@ -66,16 +83,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
   useEffect(() => {
     audioSystem.setMode('game');
+    audioSystem.updateTension(gameState.tensionLevel || 'calma', gameState.hp, gameState.maxHp, gameState.sanity);
     
-    // Cleanup heartbeat when leaving game
+    // Cleanup audio and timers when leaving game
     return () => {
+       audioSystem.updateTension('calma', 100, 100, 100);
        audioSystem.updateHeartbeat(100, 100); 
        if (glitchTimeoutRef.current) window.clearTimeout(glitchTimeoutRef.current);
        if (aberrationTimeoutRef.current) window.clearTimeout(aberrationTimeoutRef.current);
     };
   }, []);
 
-  // --- VISCERAL FEEDBACK LOGIC ---
+  // --- VISCERAL FEEDBACK & ADAPTIVE AUDIO LOGIC ---
   useEffect(() => {
      // 1. Damage Flash Logic
      if (gameState.hp < prevHpRef.current) {
@@ -84,9 +103,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
      }
      prevHpRef.current = gameState.hp;
 
-     // 2. Heartbeat Audio Logic
-     audioSystem.updateHeartbeat(gameState.hp, gameState.maxHp);
-  }, [gameState.hp, gameState.maxHp]);
+     // 2. Adaptive Tension & Audio Update
+     audioSystem.updateTension(gameState.tensionLevel || 'calma', gameState.hp, gameState.maxHp, gameState.sanity);
+  }, [gameState.tensionLevel, gameState.hp, gameState.maxHp, gameState.sanity]);
 
   // --- CALCULATE SEVERITY ---
   const calculateSeverity = () => {
@@ -212,6 +231,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
     setShowItemChat(false);
     setItemChatInput('');
     setSelectedThreadId(null);
+    setSelectedNpcId(null);
+    setShowNpcChat(false);
+    setNpcChatInput('');
   }, [gameState.turnCount]);
 
   useEffect(() => {
@@ -265,6 +287,33 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
       }, 150);
     }
   }, [showOptions, mobileTab]);
+
+  useEffect(() => {
+    if (!isLoading) return;
+    const interval = window.setInterval(() => {
+      setWhisperIdx(prev => (prev + 1) % LOADING_WHISPERS.length);
+    }, 3200);
+    return () => window.clearInterval(interval);
+  }, [isLoading]);
+
+  // Keyboard shortcut: keys 1..4 trigger suggested actions when options are revealed
+  useEffect(() => {
+    if (!showOptions || isLoading || isDead || !gameState.currentTurn?.suggestedActions) return;
+
+    const handleKeyNav = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const num = parseInt(e.key, 10);
+      if (!isNaN(num) && num >= 1 && num <= gameState.currentTurn!.suggestedActions.length) {
+        e.preventDefault();
+        const action = gameState.currentTurn!.suggestedActions[num - 1];
+        audioSystem.playLowButton();
+        onAction(action);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyNav);
+    return () => window.removeEventListener('keydown', handleKeyNav);
+  }, [showOptions, isLoading, isDead, gameState.currentTurn, onAction]);
 
   useEffect(() => {
     if (showItemChat && itemChatInputRef.current) {
@@ -461,6 +510,87 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
   const activeItemObj = selectedItem ? gameState.inventory.find(i => i.name === selectedItem) : null;
   const activeThreadObj = selectedThreadId ? gameState.activeThreads.find(t => t.id === selectedThreadId) : null;
+  const activeNpcObj = selectedNpcId ? (gameState.npcs || []).find(n => n.id === selectedNpcId) : null;
+
+  // --- NPC ACTIONS ---
+  const handleNpcClick = (npcId: string) => {
+    if (waitingForDismiss || diceRolling || isDead) return;
+    audioSystem.playClick();
+    setSelectedNpcId(selectedNpcId === npcId ? null : npcId);
+    setShowNpcChat(false);
+  };
+
+  const handleTalkToNpc = (npcName: string) => {
+    audioSystem.playClick();
+    onAction(`[HABLAR CON ${npcName}] Intento entablar conversación con cautela.`);
+    setSelectedNpcId(null);
+  };
+
+  const handleInspectNpc = (npcName: string) => {
+    audioSystem.playClick();
+    onAction(`[EXAMINAR PNJ] Observo con atención los rasgos, heridas, armas y lenguaje corporal de ${npcName}.`);
+    setSelectedNpcId(null);
+  };
+
+  const handleIntimidateNpc = (npcName: string) => {
+    audioSystem.playLowButton();
+    onAction(`[INTIMIDAR A ${npcName}] Doy un paso al frente y dejo clara mi amenaza.`);
+    setSelectedNpcId(null);
+  };
+
+  const handleAttackNpc = (npcName: string) => {
+    if (confirm(`¿Iniciar combate a muerte contra ${npcName}? La violencia en este mundo es letal y definitiva.`)) {
+      audioSystem.playLowButton();
+      onAction(`[COMBATE CONTRA ${npcName}] Desenfundó y ataco sin previo aviso.`);
+      setSelectedNpcId(null);
+    }
+  };
+
+  const handleNpcChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (npcChatInput.trim() && activeNpcObj) {
+      audioSystem.playLowButton();
+      onAction(`[INTERACCIÓN CON ${activeNpcObj.name}] ${npcChatInput}`);
+      setNpcChatInput('');
+      setSelectedNpcId(null);
+    }
+  };
+
+  const getRelationshipBadge = (rel: string) => {
+    switch (rel) {
+      case 'aliado':
+        return { label: 'Aliado', bg: 'bg-gold/10 text-gold border-gold/40' };
+      case 'favorable':
+        return { label: 'Favorable', bg: 'bg-emerald-950/40 text-emerald-400 border-emerald-700/40' };
+      case 'neutral':
+        return { label: 'Neutral', bg: 'bg-zinc-900 text-zinc-400 border-zinc-700' };
+      case 'sospechoso':
+        return { label: 'Sospechoso', bg: 'bg-amber-950/40 text-amber-400 border-amber-700/40' };
+      case 'hostil':
+        return { label: 'Hostil', bg: 'bg-blood/20 text-blood-bright border-blood/50' };
+      case 'enemigo_mortal':
+        return { label: 'Enemigo Mortal', bg: 'bg-blood/30 text-blood-bright border-blood animate-pulse font-bold' };
+      default:
+        return { label: rel, bg: 'bg-zinc-900 text-zinc-400 border-zinc-700' };
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'vivo':
+        return { label: 'Vívido', icon: '●', color: 'text-zinc-300' };
+      case 'herido':
+        return { label: 'Malherido', icon: '🩸', color: 'text-blood-bright' };
+      case 'inconsciente':
+        return { label: 'Inconsciente', icon: '💤', color: 'text-amber-400' };
+      case 'muerto':
+        return { label: 'Cadáver', icon: '☠️', color: 'text-zinc-600 line-through' };
+      case 'desaparecido':
+        return { label: 'Desaparecido', icon: '🌫️', color: 'text-zinc-500 italic' };
+      default:
+        return { label: status, icon: '•', color: 'text-zinc-400' };
+    }
+  };
 
   const getRollResultText = () => {
      if (rollResult === null || !gameState.pendingChallenge) return null;
@@ -489,6 +619,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
           {/* Base Vignette */}
           <div className="absolute inset-0 bg-vignette animate-pulse-slow"></div>
 
+          {/* Dynamic Tension Vignettes */}
+          {gameState.tensionLevel === 'combate' && <div className="absolute inset-0 vignette-combate z-[2] transition-opacity duration-1000"></div>}
+          {gameState.tensionLevel === 'agonico' && <div className="absolute inset-0 vignette-agonico z-[2] transition-opacity duration-1000"></div>}
+          {gameState.tensionLevel === 'peligro' && <div className="absolute inset-0 vignette-peligro z-[2] transition-opacity duration-700"></div>}
+          {gameState.tensionLevel === 'sospecha' && <div className="absolute inset-0 vignette-sospecha z-[2] transition-opacity duration-700"></div>}
+          {gameState.tensionLevel === 'tension' && <div className="absolute inset-0 vignette-tension z-[2] transition-opacity duration-700"></div>}
+
           {/* Agony Vignette (Low HP) */}
           <div className={`absolute inset-0 bg-gradient-radial from-transparent to-blood/40 mix-blend-overlay transition-opacity duration-1000 ${isAgony ? 'opacity-100 animate-heartbeat-visual' : 'opacity-0'}`}></div>
 
@@ -506,13 +643,34 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
       
       {/* ----------------- HEADER (FIXED 64px) ----------------- */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-panel border-b border-gold-dim z-[100] flex items-center justify-between px-4 lg:px-6 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center gap-4">
-           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm hidden md:inline shadow-black drop-shadow-md">
+        <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm hidden md:inline shadow-black drop-shadow-md shrink-0">
              Crónicas de la Penumbra
            </span>
-           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm md:hidden">
+           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm md:hidden shrink-0">
              Crónicas
            </span>
+
+           {/* Location Badge */}
+           {gameState.currentLocation && (
+             <div className="hidden sm:flex items-center gap-1.5 text-xs border-l border-gold-dim/40 pl-3 text-parchment-dim shrink truncate max-w-[200px] md:max-w-xs">
+               <span className="text-gold-dim">🏛️</span>
+               <span className="text-bone font-serif italic truncate">{gameState.currentLocation.name}</span>
+             </div>
+           )}
+
+           {/* Tension Badge */}
+           {gameState.tensionLevel && (
+              <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded font-display font-bold border shrink-0 ${
+                 gameState.tensionLevel === 'combate' || gameState.tensionLevel === 'peligro' || gameState.tensionLevel === 'agonico'
+                   ? 'border-blood text-blood-bright bg-blood/10 animate-pulse'
+                   : gameState.tensionLevel === 'tension' || gameState.tensionLevel === 'sospecha'
+                   ? 'border-gold-dim text-gold bg-gold/10'
+                   : 'border-zinc-700 text-zinc-400 bg-zinc-900'
+              }`}>
+                 {gameState.tensionLevel}
+              </span>
+           )}
         </div>
         
         <div className="flex items-center gap-3 md:gap-5">
@@ -667,9 +825,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
         {/* CENTER COLUMN: Narrative */}
         <main className={`
-            flex-col min-w-0 bg-void/50 border border-gold-dim/30 rounded-2xl overflow-hidden relative shadow-2xl backdrop-blur-sm
+            flex-col min-w-0 bg-void/60 border rounded-2xl overflow-hidden relative backdrop-blur-sm transition-all duration-700
             ${mobileTab === 'narrative' ? 'flex w-full' : 'hidden'}
             lg:flex lg:flex-1
+            ${
+              gameState.tensionLevel === 'combate' || gameState.tensionLevel === 'agonico'
+                ? 'border-blood/70 shadow-[0_0_35px_rgba(138,28,28,0.25)]'
+                : gameState.tensionLevel === 'peligro'
+                ? 'border-amber-700/60 shadow-[0_0_25px_rgba(180,80,10,0.2)]'
+                : gameState.tensionLevel === 'tension'
+                ? 'border-gold-dim/60 shadow-[0_0_20px_rgba(197,160,89,0.15)]'
+                : gameState.tensionLevel === 'sospecha'
+                ? 'border-cyan-950/60 shadow-[0_0_20px_rgba(30,50,70,0.2)]'
+                : 'border-gold-dim/30 shadow-2xl'
+            }
         `}>
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 lg:px-16 scroll-smooth">
              <div className="max-w-3xl mx-auto">
@@ -684,6 +853,57 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                    {gameState.character.bio && <p className="text-parchment-dim text-lg md:text-xl italic font-serif max-w-2xl mx-auto leading-relaxed opacity-80 mt-6 px-4">"{gameState.character.bio}"</p>}
                    <div className="mt-16 text-gold/60 text-xs tracking-[0.3em] uppercase">— Inicio de la Crónica —</div>
                 </div>
+
+                {/* --- CARTOGRAFÍA Y ENTORNO VISIBLE --- */}
+                {gameState.currentLocation && (
+                  <div className="mb-10 p-5 bg-void/80 border border-gold-dim/40 rounded-xl shadow-lg backdrop-blur-md animate-fade-in relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-gold-dim to-transparent opacity-40"></div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gold-dim/20 pb-2 mb-3">
+                       <div className="flex items-center gap-2">
+                          <span className="text-gold text-lg">🏛️</span>
+                          <h3 className="text-bone font-display font-bold text-lg tracking-wide">{gameState.currentLocation.name}</h3>
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded border border-white/10 bg-panel text-parchment-dim">
+                             {gameState.currentLocation.lighting === 'oscuridad_total' ? '🌑 Oscuridad Total' :
+                              gameState.currentLocation.lighting === 'penumbra' ? '🕯️ Penumbra' :
+                              gameState.currentLocation.lighting === 'antorchas' ? '🔥 Antorchas' : '☀️ Luz Gris'}
+                          </span>
+                          <span className={`text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded border font-bold ${
+                             gameState.currentLocation.dangerLevel === 'letal' ? 'border-blood text-blood-bright bg-blood/10 animate-pulse' :
+                             gameState.currentLocation.dangerLevel === 'inquietante' ? 'border-gold-dim text-gold bg-gold/10' :
+                             'border-zinc-700 text-zinc-400 bg-zinc-900'
+                          }`}>
+                             {gameState.currentLocation.dangerLevel === 'letal' ? '☠️ Letal' :
+                              gameState.currentLocation.dangerLevel === 'inquietante' ? '⚠️ Inquietante' : '🛡️ Seguro'}
+                          </span>
+                       </div>
+                    </div>
+                    <p className="text-sm md:text-base font-serif italic text-parchment-dim leading-relaxed mb-3">
+                       {gameState.currentLocation.description}
+                    </p>
+                    {gameState.currentLocation.exits && gameState.currentLocation.exits.length > 0 && (
+                       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
+                          <span className="text-[9px] uppercase tracking-widest text-gold-dim font-display font-bold mr-1">Salidas Visibles:</span>
+                          {gameState.currentLocation.exits.map((exit, eIdx) => (
+                             <button
+                                key={eIdx}
+                                onClick={() => {
+                                   audioSystem.playClick();
+                                   onAction(`[DIRIGIRSE A] ${exit}`);
+                                }}
+                                disabled={isLoading || isDead}
+                                className="text-xs font-serif text-parchment hover:text-gold bg-panel hover:bg-gold/10 border border-gold-dim/30 hover:border-gold px-2.5 py-1 rounded transition-all disabled:opacity-50 group flex items-center gap-1 shadow-sm"
+                                title="Avanzar por esta salida"
+                             >
+                                <span className="text-gold-dim group-hover:text-gold">↳</span>
+                                <span>{exit}</span>
+                             </button>
+                          ))}
+                       </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 
                    DYNAMIC CONTAINER FOR TEXT EFFECTS 
@@ -760,9 +980,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                 )}
 
                 {isLoading && (
-                  <div ref={loadingRef} className="py-8 flex flex-col items-center justify-center gap-3 opacity-80">
-                    <div className="flex gap-2"><span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.3s]"></span><span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.15s]"></span><span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce"></span></div>
-                    <span className="text-gold font-display text-[10px] uppercase tracking-[0.3em] animate-pulse">Escribiendo el destino...</span>
+                  <div ref={loadingRef} className="py-10 flex flex-col items-center justify-center gap-3.5 opacity-90 animate-fade-in">
+                    <div className="flex gap-2.5">
+                       <span className="w-2 h-2 bg-gold rounded-full animate-bounce [animation-delay:-0.3s] shadow-[0_0_8px_rgba(197,160,89,0.8)]"></span>
+                       <span className="w-2 h-2 bg-gold rounded-full animate-bounce [animation-delay:-0.15s] shadow-[0_0_8px_rgba(197,160,89,0.8)]"></span>
+                       <span className="w-2 h-2 bg-gold rounded-full animate-bounce shadow-[0_0_8px_rgba(197,160,89,0.8)]"></span>
+                    </div>
+                    <span className="text-gold font-display text-xs tracking-[0.25em] uppercase text-center max-w-md px-4 italic animate-pulse">
+                       {LOADING_WHISPERS[whisperIdx]}
+                    </span>
                   </div>
                 )}
                 
@@ -784,8 +1010,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                    {gameState.currentTurn?.suggestedActions && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
                          {gameState.currentTurn.suggestedActions.map((action, idx) => (
-                            <button key={idx} onClick={() => { audioSystem.playLowButton(); onAction(action); }} disabled={isLoading} className="text-left px-4 py-3 bg-void border border-gold-dim/40 hover:border-gold hover:bg-zinc-900 text-parchment hover:text-bone transition-all duration-200 rounded-lg shadow-sm group">
-                               <span className="text-gold-dim group-hover:text-gold mr-2 text-sm">➤</span><span className="font-serif italic text-lg">{action}</span>
+                            <button 
+                              key={idx} 
+                              onClick={() => { audioSystem.playLowButton(); onAction(action); }} 
+                              disabled={isLoading} 
+                              className="text-left px-4 py-3.5 bg-void/90 border border-gold-dim/40 hover:border-gold hover:bg-gold/5 text-parchment hover:text-bone transition-all duration-200 rounded-lg shadow-sm group flex items-start justify-between gap-3"
+                            >
+                               <div className="flex items-start gap-2.5">
+                                  <span className="text-gold-dim group-hover:text-gold mt-1 text-sm font-mono transition-colors">➤</span>
+                                  <span className="font-serif italic text-base md:text-lg leading-snug">{action}</span>
+                               </div>
+                               <span className="text-[10px] font-mono font-bold text-zinc-500 group-hover:text-gold border border-zinc-700 group-hover:border-gold/50 px-1.5 py-0.5 rounded shrink-0 transition-colors">
+                                  [{idx + 1}]
+                               </span>
                             </button>
                          ))}
                       </div>
@@ -799,102 +1036,192 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
           )}
         </main>
 
-        {/* RIGHT COLUMN: Inventory */}
+        {/* RIGHT COLUMN: Tabbed Panel (Inventory, NPCs, Codex) */}
         <aside className={`
            flex-col bg-panel/90 backdrop-blur-sm border border-gold-dim/30 z-20 shadow-xl overflow-hidden rounded-2xl
            ${mobileTab === 'inventory' ? 'flex absolute top-0 left-4 right-4 bottom-24 z-40' : 'hidden'}
            lg:flex lg:static lg:w-72 xl:w-80 lg:inset-auto lg:h-auto
         `}>
-           <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              <div className="mb-10">
-                  <div className="flex justify-between items-center border-b border-gold-dim/20 pb-2 mb-4">
-                     <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] font-display font-bold">Inventario</h3>
-                     <span className={`text-[10px] font-display font-bold tracking-widest ${isOverburdened ? 'text-blood-bright' : 'text-parchment-dim'}`}>{currentInventoryCount} / {maxInventorySlots}</span>
-                  </div>
-                  {combineSource && (
-                     <div className="mb-4 bg-gold/10 border border-gold p-2 text-center rounded animate-pulse">
-                        <p className="text-xs text-gold font-bold uppercase tracking-widest mb-1">Modo Combinación</p>
-                        <p className="text-xs text-parchment-dim">Selecciona el segundo objeto...</p>
-                        <button onClick={() => setCombineSource(null)} className="mt-2 text-[10px] underline text-zinc-500 hover:text-white">Cancelar</button>
-                     </div>
-                  )}
-                  <ul className="space-y-3">
-                     {gameState.inventory.length === 0 ? <li className="text-zinc-600 italic text-sm">Bolsillos vacíos.</li> : 
-                        gameState.inventory.map((item: InventoryItem, i) => {
-                           const isSelected = selectedItem === item.name;
-                           const isSource = combineSource === item.name;
-                           const isLocked = waitingForDismiss || diceRolling;
-                           return (
-                              <li key={i} className={`relative ${isLocked ? 'cursor-not-allowed opacity-50 grayscale' : ''}`} onClick={() => handleItemClick(item.name)}>
-                                 <div className={`flex flex-col gap-1 transition-all group cursor-pointer p-2 rounded-lg border ${isSource ? 'border-gold bg-gold/10' : ''} ${isSelected ? 'border-gold-dim bg-white/5' : 'border-transparent hover:bg-white/5'} ${combineSource && !isSource ? 'animate-pulse hover:border-gold cursor-copy' : ''}`}>
-                                   <div className="flex items-start gap-2">
-                                     <span className="text-gold-dim mt-1.5 text-[8px] group-hover:text-gold transition-colors">◆</span>
-                                     <span className={`text-lg font-serif leading-tight ${isSelected || isSource ? 'text-bone' : 'text-parchment'}`}>{item.name}</span>
-                                   </div>
-                                   
-                                   {/* RENDER TAGS */}
-                                   {item.tags && item.tags.length > 0 && (
-                                     <div className="flex flex-wrap gap-1 ml-4 mt-1">
-                                       {item.tags.map((tag, tIdx) => (
-                                          <span key={tIdx} className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-300 bg-zinc-900/80">
-                                            {tag}
-                                          </span>
-                                       ))}
-                                     </div>
-                                   )}
-                                 </div>
-                              </li>
-                           );
-                        })
-                     }
-                  </ul>
-                  {isOverburdened && <div className="mt-4 text-[10px] text-blood-bright uppercase tracking-widest text-center animate-pulse">¡Sobrecargado! Debes tirar algo.</div>}
-              </div>
+           <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
               
-              {/* NEW: ACTIVE THREADS SECTION */}
-              {gameState.activeThreads && gameState.activeThreads.length > 0 && (
-                <div className="mb-10">
-                   <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Hilos del Destino</h3>
-                   <div className="space-y-3">
-                      {gameState.activeThreads.map((thread, i) => (
-                         <div key={i} onClick={() => handleThreadClick(thread.id)} className={`bg-black/20 border transition-all duration-300 p-3 rounded-lg flex items-start gap-3 cursor-pointer group ${selectedThreadId === thread.id ? 'border-gold bg-white/5' : 'border-gold-dim/20 hover:border-gold-dim hover:bg-white/5'}`}>
-                            <span className={`text-xs mt-1 transition-colors ${selectedThreadId === thread.id ? 'text-gold' : 'text-zinc-600 group-hover:text-gold'}`}>✦</span>
-                            <div>
-                               <p className={`font-display font-bold text-sm tracking-wide transition-colors ${selectedThreadId === thread.id ? 'text-bone drop-shadow' : 'text-parchment brightness-110'}`}>{thread.title}</p>
-                               <span className="text-[9px] text-zinc-400 uppercase tracking-widest group-hover:text-zinc-300">Activo</span>
-                            </div>
-                         </div>
-                      ))}
-                   </div>
+              {/* TAB SELECTOR HEADER */}
+              <div className="flex border-b border-gold-dim/20 mb-5 bg-void/40 rounded-xl p-1 gap-1">
+                 <button 
+                   onClick={() => { audioSystem.playClick(); setRightTab('inventory'); }}
+                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'inventory' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                 >
+                   Bolsillos ({currentInventoryCount})
+                 </button>
+                 <button 
+                   onClick={() => { audioSystem.playClick(); setRightTab('npcs'); }}
+                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all relative ${rightTab === 'npcs' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                 >
+                   Personas {gameState.npcs && gameState.npcs.length > 0 && <span className="ml-1 text-[9px] px-1.5 py-0.2 rounded-full bg-gold/20 text-gold">{gameState.npcs.length}</span>}
+                 </button>
+                 <button 
+                   onClick={() => { audioSystem.playClick(); setRightTab('codex'); }}
+                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'codex' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                 >
+                   Códice
+                 </button>
+              </div>
+
+              {/* TAB 1: INVENTORY */}
+              {rightTab === 'inventory' && (
+                <div className="animate-fade-in space-y-4">
+                    <div className="flex justify-between items-center border-b border-gold-dim/20 pb-2 mb-4">
+                       <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] font-display font-bold">Inventario</h3>
+                       <span className={`text-[10px] font-display font-bold tracking-widest ${isOverburdened ? 'text-blood-bright' : 'text-parchment-dim'}`}>{currentInventoryCount} / {maxInventorySlots}</span>
+                    </div>
+                    {combineSource && (
+                       <div className="mb-4 bg-gold/10 border border-gold p-2 text-center rounded animate-pulse">
+                          <p className="text-xs text-gold font-bold uppercase tracking-widest mb-1">Modo Combinación</p>
+                          <p className="text-xs text-parchment-dim">Selecciona el segundo objeto...</p>
+                          <button onClick={() => setCombineSource(null)} className="mt-2 text-[10px] underline text-zinc-500 hover:text-white">Cancelar</button>
+                       </div>
+                    )}
+                    <ul className="space-y-3">
+                       {gameState.inventory.length === 0 ? <li className="text-zinc-600 italic text-sm py-4 text-center">Bolsillos vacíos.</li> : 
+                          gameState.inventory.map((item: InventoryItem, i) => {
+                             const isSelected = selectedItem === item.name;
+                             const isSource = combineSource === item.name;
+                             const isLocked = waitingForDismiss || diceRolling;
+                             return (
+                                <li key={i} className={`relative ${isLocked ? 'cursor-not-allowed opacity-50 grayscale' : ''}`} onClick={() => handleItemClick(item.name)}>
+                                   <div className={`flex flex-col gap-1 transition-all group cursor-pointer p-2 rounded-lg border ${isSource ? 'border-gold bg-gold/10' : ''} ${isSelected ? 'border-gold-dim bg-white/5' : 'border-transparent hover:bg-white/5'} ${combineSource && !isSource ? 'animate-pulse hover:border-gold cursor-copy' : ''}`}>
+                                     <div className="flex items-start gap-2">
+                                       <span className="text-gold-dim mt-1.5 text-[8px] group-hover:text-gold transition-colors">◆</span>
+                                       <span className={`text-lg font-serif leading-tight ${isSelected || isSource ? 'text-bone' : 'text-parchment'}`}>{item.name}</span>
+                                     </div>
+                                     {item.tags && item.tags.length > 0 && (
+                                       <div className="flex flex-wrap gap-1 ml-4 mt-1">
+                                         {item.tags.map((tag, tIdx) => (
+                                            <span key={tIdx} className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-300 bg-zinc-900/80">
+                                              {tag}
+                                            </span>
+                                         ))}
+                                       </div>
+                                     )}
+                                   </div>
+                                </li>
+                             );
+                          })
+                       }
+                    </ul>
+                    {isOverburdened && <div className="mt-4 text-[10px] text-blood-bright uppercase tracking-widest text-center animate-pulse">¡Sobrecargado! Debes tirar algo.</div>}
                 </div>
               )}
 
-              <div>
-                  <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Códice</h3>
-                  <div className="space-y-4">
-                     {gameState.worldFacts.map((fact, i) => (
-                        <button key={i} onClick={() => scrollToTurn(fact.turnIndex)} className="block w-full text-left relative pl-3 border-l border-gold-dim/30 hover:border-gold transition-colors py-1 group focus:outline-none" title="Ver recuerdo">
-                           <p className="text-parchment brightness-110 text-md italic font-serif leading-relaxed text-justify group-hover:text-bone transition-colors">"{fact.text}"</p>
-                        </button>
-                     ))}
-                     {gameState.worldFacts.length === 0 && <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-4">Mente en blanco.</p>}
-                  </div>
-              </div>
+              {/* TAB 2: DRAMATIS PERSONAE (PNJS) */}
+              {rightTab === 'npcs' && (
+                <div className="animate-fade-in space-y-4">
+                    <div className="flex justify-between items-center border-b border-gold-dim/20 pb-2 mb-4">
+                       <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] font-display font-bold">Dramatis Personae</h3>
+                       <span className="text-[10px] font-display font-bold tracking-widest text-parchment-dim">{(gameState.npcs || []).length} Registrados</span>
+                    </div>
+                    {(!gameState.npcs || gameState.npcs.length === 0) ? (
+                       <p className="text-zinc-600 italic text-sm py-8 text-center leading-relaxed">
+                          Ningún rostro grabado en tu memoria. Las sombras caminan solas.
+                       </p>
+                    ) : (
+                       <div className="space-y-3">
+                          {gameState.npcs.map((npc) => {
+                             const relBadge = getRelationshipBadge(npc.relationship);
+                             const statusBadge = getStatusBadge(npc.status);
+                             const isSelected = selectedNpcId === npc.id;
+                             return (
+                                <div 
+                                  key={npc.id}
+                                  onClick={() => handleNpcClick(npc.id)}
+                                  className={`p-3 rounded-lg border transition-all cursor-pointer group ${isSelected ? 'border-gold bg-white/5 shadow-md' : 'border-gold-dim/20 bg-void/30 hover:border-gold-dim hover:bg-white/5'}`}
+                                >
+                                   <div className="flex justify-between items-start gap-2 mb-1">
+                                      <h4 className={`font-display font-bold text-sm tracking-wide ${isSelected ? 'text-bone' : 'text-parchment group-hover:text-bone'}`}>
+                                         {npc.name}
+                                      </h4>
+                                      <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${relBadge.bg}`}>
+                                         {relBadge.label}
+                                      </span>
+                                   </div>
+                                   <div className="flex justify-between items-center text-[10px] text-zinc-400 mb-2">
+                                      <span className="italic font-serif">{npc.role}</span>
+                                      <span className={`flex items-center gap-1 ${statusBadge.color}`}>
+                                         <span>{statusBadge.icon}</span>
+                                         <span>{statusBadge.label}</span>
+                                      </span>
+                                   </div>
+                                   {npc.location && (
+                                      <div className="text-[9px] text-zinc-500 font-serif truncate">
+                                         📍 {npc.location}
+                                      </div>
+                                   )}
+                                </div>
+                             );
+                          })}
+                       </div>
+                    )}
+                </div>
+              )}
+
+              {/* TAB 3: CODEX & NARRATIVE THREADS */}
+              {rightTab === 'codex' && (
+                <div className="animate-fade-in space-y-6">
+                    {/* ACTIVE THREADS */}
+                    {gameState.activeThreads && gameState.activeThreads.length > 0 && (
+                      <div>
+                         <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Hilos del Destino</h3>
+                         <div className="space-y-3">
+                            {gameState.activeThreads.map((thread, i) => (
+                               <div key={i} onClick={() => handleThreadClick(thread.id)} className={`bg-black/20 border transition-all duration-300 p-3 rounded-lg flex items-start gap-3 cursor-pointer group ${selectedThreadId === thread.id ? 'border-gold bg-white/5' : 'border-gold-dim/20 hover:border-gold-dim hover:bg-white/5'}`}>
+                                  <span className={`text-xs mt-1 transition-colors ${selectedThreadId === thread.id ? 'text-gold' : 'text-zinc-600 group-hover:text-gold'}`}>✦</span>
+                                  <div>
+                                     <p className={`font-display font-bold text-sm tracking-wide transition-colors ${selectedThreadId === thread.id ? 'text-bone drop-shadow' : 'text-parchment brightness-110'}`}>{thread.title}</p>
+                                     <span className="text-[9px] text-zinc-400 uppercase tracking-widest group-hover:text-zinc-300">Activo</span>
+                                  </div>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                    )}
+
+                    {/* WORLD FACTS */}
+                    <div>
+                        <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Códice</h3>
+                        <div className="space-y-4">
+                           {gameState.worldFacts.map((fact, i) => (
+                              <button key={i} onClick={() => scrollToTurn(fact.turnIndex)} className="block w-full text-left relative pl-3 border-l border-gold-dim/30 hover:border-gold transition-colors py-1 group focus:outline-none" title="Ver recuerdo">
+                                 <p className="text-parchment brightness-110 text-md italic font-serif leading-relaxed text-justify group-hover:text-bone transition-colors">"{fact.text}"</p>
+                              </button>
+                           ))}
+                           {gameState.worldFacts.length === 0 && <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-4">Mente en blanco.</p>}
+                        </div>
+                    </div>
+                </div>
+              )}
+
            </div>
         </aside>
 
         {/* MOBILE TABS */}
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 h-16 bg-panel/95 backdrop-blur border border-gold-dim rounded-2xl flex items-center justify-around z-50 shadow-2xl">
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('character'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-l-2xl transition-colors ${mobileTab === 'character' ? 'text-gold bg-white/5' : 'text-zinc-500'}`}>
-              <span className="text-lg mb-1">👤</span><span className="text-[9px] uppercase tracking-widest font-display font-bold">Personaje</span>
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 h-16 bg-panel/95 backdrop-blur-md border border-gold-dim/40 rounded-2xl flex items-center justify-around z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('character'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-l-2xl transition-all ${mobileTab === 'character' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+              <span className="text-lg mb-0.5">👤</span>
+              <span className="text-[9px] uppercase tracking-widest font-display">Personaje</span>
            </button>
            <div className="w-px h-8 bg-gold-dim/20"></div>
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('narrative'); }} className={`flex flex-col items-center justify-center w-full h-full transition-colors ${mobileTab === 'narrative' ? 'text-gold bg-white/5' : 'text-zinc-500'}`}>
-              <span className="text-lg mb-1">📜</span><span className="text-[9px] uppercase tracking-widest font-display font-bold">Historia</span>
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('narrative'); }} className={`flex flex-col items-center justify-center w-full h-full transition-all ${mobileTab === 'narrative' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+              <span className="text-lg mb-0.5">📜</span>
+              <span className="text-[9px] uppercase tracking-widest font-display">Crónica</span>
            </button>
            <div className="w-px h-8 bg-gold-dim/20"></div>
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('inventory'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-r-2xl transition-colors ${mobileTab === 'inventory' ? 'text-gold bg-white/5' : 'text-zinc-500'}`}>
-              <span className="text-lg mb-1">🎒</span><span className="text-[9px] uppercase tracking-widest font-display font-bold">Códice</span>
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('inventory'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-r-2xl transition-all relative ${mobileTab === 'inventory' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+              <span className="text-lg mb-0.5">🎒</span>
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] uppercase tracking-widest font-display">Códice</span>
+                {(currentInventoryCount > 0 || (gameState.npcs && gameState.npcs.length > 0)) && (
+                   <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>
+                )}
+              </div>
            </button>
         </div>
       </div>
@@ -962,6 +1289,90 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                  <div className="mt-8 pt-6 border-t border-gold-dim/20 w-full flex justify-center">
                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 bg-void/50 px-4 py-1 rounded-full border border-white/5">Estado: Activo</span>
                  </div>
+             </div>
+         </div>
+      )}
+
+      {/* NEW: NPC DOSSIER MODAL */}
+      {activeNpcObj && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setSelectedNpcId(null)}></div>
+             <div className="relative bg-panel border-2 border-gold-dim rounded-2xl w-full max-w-lg shadow-[0_0_60px_rgba(197,160,89,0.2)] p-6 md:p-8 animate-fade-in flex flex-col">
+                 <div className="flex justify-between items-start border-b border-gold-dim/40 pb-4 mb-4">
+                    <div>
+                       <div className="flex items-center gap-2 mb-1">
+                          <span className="text-gold text-xl">👤</span>
+                          <h3 className="text-2xl font-display font-bold text-bone">{activeNpcObj.name}</h3>
+                       </div>
+                       <p className="text-gold-dim font-serif italic text-sm">{activeNpcObj.role}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                       <button onClick={() => setSelectedNpcId(null)} className="text-zinc-500 hover:text-white transition-colors mb-1">✕</button>
+                       <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded border font-bold ${getRelationshipBadge(activeNpcObj.relationship).bg}`}>
+                          {getRelationshipBadge(activeNpcObj.relationship).label}
+                       </span>
+                       <span className={`text-[10px] flex items-center gap-1 font-serif ${getStatusBadge(activeNpcObj.status).color}`}>
+                          <span>{getStatusBadge(activeNpcObj.status).icon}</span>
+                          <span>{getStatusBadge(activeNpcObj.status).label}</span>
+                       </span>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4 mb-6 max-h-[45vh] overflow-y-auto custom-scrollbar pr-1">
+                    <div>
+                       <span className="text-[9px] uppercase tracking-widest text-gold-dim font-display font-bold block mb-1">Aspecto y Comportamiento</span>
+                       <p className="text-base text-parchment font-serif italic leading-relaxed bg-void/40 p-3 rounded-lg border border-white/5">
+                          "{activeNpcObj.description}"
+                       </p>
+                    </div>
+
+                    {activeNpcObj.notes && (
+                       <div>
+                          <span className="text-[9px] uppercase tracking-widest text-blood-bright font-display font-bold block mb-1">Secretos o Notas Clave</span>
+                          <p className="text-sm text-parchment-dim font-serif bg-blood/10 border border-blood/20 p-3 rounded-lg leading-relaxed">
+                             {activeNpcObj.notes}
+                          </p>
+                       </div>
+                    )}
+
+                    {activeNpcObj.location && (
+                       <div className="text-xs text-zinc-500 font-serif flex items-center gap-1.5">
+                          <span>📍</span>
+                          <span>Ubicación: <strong className="text-parchment-dim">{activeNpcObj.location}</strong></span>
+                       </div>
+                    )}
+                 </div>
+
+                 {/* ACTION BUTTONS ON NPC */}
+                 {!showNpcChat ? (
+                    <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-gold-dim/20">
+                       <button onClick={() => handleTalkToNpc(activeNpcObj.name)} disabled={isLoading || activeNpcObj.status === 'muerto'} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-widest font-bold transition-all rounded disabled:opacity-30">HABLAR</button>
+                       <button onClick={() => handleInspectNpc(activeNpcObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-widest font-bold transition-all rounded disabled:opacity-30">EXAMINAR</button>
+                       <button onClick={() => handleIntimidateNpc(activeNpcObj.name)} disabled={isLoading || activeNpcObj.status === 'muerto'} className="px-3 py-2.5 border border-amber-900/50 hover:border-amber-600 hover:text-amber-400 text-amber-500/80 font-display text-xs tracking-widest font-bold transition-all rounded disabled:opacity-30">INTIMIDAR</button>
+                       <button onClick={() => handleAttackNpc(activeNpcObj.name)} disabled={isLoading || activeNpcObj.status === 'muerto'} className="px-3 py-2.5 border border-blood/40 hover:border-blood hover:bg-blood/20 text-blood-bright font-display text-xs tracking-widest font-bold transition-all rounded disabled:opacity-30">ATACAR</button>
+                       <button onClick={() => { audioSystem.playClick(); setShowNpcChat(true); }} disabled={isLoading || activeNpcObj.status === 'muerto'} className="col-span-2 py-2.5 border border-gold/40 hover:bg-gold/10 hover:border-gold text-gold font-display text-xs tracking-widest font-bold transition-all rounded shadow-sm">ACCIÓN PERSONALIZADA</button>
+                    </div>
+                 ) : (
+                    <div className="pt-2 border-t border-gold-dim/20 animate-fade-in">
+                       <div className="flex justify-between items-center mb-2 text-[10px] uppercase tracking-widest text-gold font-display">
+                          <span>Acción hacia {activeNpcObj.name}</span>
+                          <button onClick={() => setShowNpcChat(false)} className="text-zinc-500 hover:text-white underline">Volver</button>
+                       </div>
+                       <form onSubmit={handleNpcChatSubmit}>
+                          <input 
+                             ref={npcChatInputRef}
+                             type="text" 
+                             value={npcChatInput}
+                             onChange={(e) => setNpcChatInput(e.target.value)}
+                             placeholder={`¿Qué quieres decirle o hacerle a ${activeNpcObj.name}?`}
+                             className="w-full bg-void border border-gold-dim/50 p-3 text-parchment text-sm font-serif italic focus:outline-none focus:border-gold rounded mb-2.5"
+                          />
+                          <button type="submit" disabled={!npcChatInput.trim() || isLoading} className="w-full py-2.5 bg-gold/10 border border-gold/50 text-gold hover:bg-gold hover:text-void font-display uppercase text-xs font-bold tracking-widest transition-colors rounded">
+                             EJECUTAR
+                          </button>
+                       </form>
+                    </div>
+                 )}
              </div>
          </div>
       )}

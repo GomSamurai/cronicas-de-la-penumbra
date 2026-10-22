@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GameState, Character, GameStatus, TurnData, AIResponseSchema, WorldFact, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, ServiceResponse } from './types';
+import { GameState, Character, GameStatus, TurnData, AIResponseSchema, WorldFact, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, ServiceResponse, NPC, LocationInfo } from './types';
 import StartScreen from './components/StartScreen';
 import GameScreen from './components/GameScreen';
 import HomeScreen from './components/HomeScreen';
@@ -65,6 +65,9 @@ const App: React.FC = () => {
         turnCount: 0,
         pendingChallenge: null,
         diceLog: [],
+        npcs: [],
+        currentLocation: undefined,
+        visitedLocations: [],
         sessionTokens: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
         lastTurnTokens: { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
       };
@@ -75,7 +78,8 @@ const App: React.FC = () => {
 
       const introTurn: TurnData = {
         narrative: response.narrative,
-        suggestedActions: response.suggestedActions
+        suggestedActions: response.suggestedActions,
+        tensionLevel: response.tensionLevel || 'tension'
       };
 
       const initialInventory = response.inventoryAdd || [];
@@ -88,6 +92,9 @@ const App: React.FC = () => {
       const initialThreads: NarrativeThread[] = response.newThreads || [];
       const initialTraumas: Trauma[] = response.newTraumas || [];
       const initialPhobias: Phobia[] = response.newPhobias || [];
+      const initialNpcs: NPC[] = response.newNpcs || [];
+      const initialLocation = response.locationUpdate;
+      const initialVisited = initialLocation ? [initialLocation.name] : [];
 
       setGameState({
         ...initial,
@@ -99,6 +106,11 @@ const App: React.FC = () => {
         activeThreads: initialThreads,
         traumas: initialTraumas,
         phobias: initialPhobias,
+        environmentContext: response.environmentContext || initial.environmentContext,
+        tensionLevel: response.tensionLevel || 'tension',
+        npcs: initialNpcs,
+        currentLocation: initialLocation,
+        visitedLocations: initialVisited,
         sessionTokens: usage,
         lastTurnTokens: usage
       });
@@ -216,9 +228,47 @@ const App: React.FC = () => {
            updatedPhobias = updatedPhobias.filter(p => !response.resolvedPhobias!.includes(p.id));
         }
 
+        // --- NPCS LOGIC ---
+        let updatedNpcs = [...(prevState.npcs || [])];
+        if (response.newNpcs) {
+          response.newNpcs.forEach(newNpc => {
+            const idx = updatedNpcs.findIndex(n => n.id === newNpc.id);
+            if (idx >= 0) {
+              updatedNpcs[idx] = newNpc;
+            } else {
+              updatedNpcs.push(newNpc);
+            }
+          });
+        }
+        if (response.npcUpdates) {
+          response.npcUpdates.forEach(update => {
+            const idx = updatedNpcs.findIndex(n => n.id === update.id);
+            if (idx >= 0) {
+              updatedNpcs[idx] = {
+                ...updatedNpcs[idx],
+                name: update.name || updatedNpcs[idx].name,
+                role: update.role || updatedNpcs[idx].role,
+                description: update.description || updatedNpcs[idx].description,
+                status: update.status || updatedNpcs[idx].status,
+                relationship: update.relationship || updatedNpcs[idx].relationship,
+                notes: update.notes !== undefined ? update.notes : updatedNpcs[idx].notes,
+                location: update.location || updatedNpcs[idx].location
+              };
+            }
+          });
+        }
+
+        // --- LOCATION LOGIC ---
+        const newLocation = response.locationUpdate || prevState.currentLocation;
+        let updatedVisited = [...(prevState.visitedLocations || [])];
+        if (newLocation && !updatedVisited.includes(newLocation.name)) {
+          updatedVisited.push(newLocation.name);
+        }
+
         const newTurn: TurnData = {
           narrative: response.narrative,
-          suggestedActions: response.suggestedActions
+          suggestedActions: response.suggestedActions,
+          tensionLevel: response.tensionLevel || prevState.tensionLevel || 'tension'
         };
 
         const newNarrativeHistory = [...prevState.narrativeHistory, newTurn];
@@ -253,6 +303,10 @@ const App: React.FC = () => {
           traumas: updatedTraumas,
           phobias: updatedPhobias,
           environmentContext: response.environmentContext || prevState.environmentContext,
+          tensionLevel: response.tensionLevel || prevState.tensionLevel || 'tension',
+          npcs: updatedNpcs,
+          currentLocation: newLocation,
+          visitedLocations: updatedVisited,
 
           history: newContextHistory,
           narrativeHistory: newNarrativeHistory,
@@ -308,6 +362,9 @@ const App: React.FC = () => {
           if (!loadedState.traumas) loadedState.traumas = []; 
           if (!loadedState.phobias) loadedState.phobias = [];
           if (!loadedState.environmentContext) loadedState.environmentContext = "";
+          if (!loadedState.tensionLevel) loadedState.tensionLevel = 'tension';
+          if (!loadedState.npcs) loadedState.npcs = [];
+          if (!loadedState.visitedLocations) loadedState.visitedLocations = [];
 
           
           // Migration: Token Tracking defaults
@@ -342,6 +399,9 @@ const App: React.FC = () => {
           if (!loadedState.traumas) loadedState.traumas = []; 
           if (!loadedState.phobias) loadedState.phobias = [];
           if (!loadedState.environmentContext) loadedState.environmentContext = "";
+          if (!loadedState.tensionLevel) loadedState.tensionLevel = 'tension';
+          if (!loadedState.npcs) loadedState.npcs = [];
+          if (!loadedState.visitedLocations) loadedState.visitedLocations = [];
 
           if (!loadedState.sessionTokens) loadedState.sessionTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
           if (!loadedState.lastTurnTokens) loadedState.lastTurnTokens = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };

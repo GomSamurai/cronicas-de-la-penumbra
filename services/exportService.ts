@@ -13,7 +13,10 @@ export const exportStoryToPDF = (gameState: GameState) => {
     phobias,
     activeThreads,
     worldFacts,
-    diceLog
+    diceLog,
+    npcs,
+    currentLocation,
+    visitedLocations
   } = gameState;
 
   const date = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -85,6 +88,61 @@ export const exportStoryToPDF = (gameState: GameState) => {
         <span>${f.text}</span>
       </div>`).join('')
     : '<div class="text-center italic text-dim">Nada se aprendió.</div>';
+
+  // DRAMATIS PERSONAE
+  const npcsList = npcs && npcs.length > 0
+    ? npcs.map(npc => {
+        const relLabelMap: Record<string, string> = {
+          aliado: 'Aliado jurado',
+          favorable: 'Favorable',
+          neutral: 'Indiferente',
+          sospechoso: 'Sospechoso',
+          hostil: 'Hostil',
+          enemigo_mortal: 'Enemigo mortal'
+        };
+        const relLabel = relLabelMap[npc.relationship] || npc.relationship;
+        const statusLabelMap: Record<string, string> = {
+          vivo: 'Con vida',
+          herido: 'Malherido',
+          inconsciente: 'Inconsciente',
+          muerto: 'Caído / Finado',
+          desaparecido: 'En paradero desconocido'
+        };
+        const statusLabel = statusLabelMap[npc.status] || npc.status;
+
+        return `
+        <div class="npc-card">
+           <div class="npc-header">
+              <span class="npc-name">${npc.name}</span>
+              <span class="npc-badges">${npc.role ? `<span class="npc-role">${npc.role}</span> • ` : ''}<span class="npc-status status-${npc.status}">${statusLabel}</span></span>
+           </div>
+           <div class="npc-meta">Disposición: <strong>${relLabel}</strong>${npc.location ? ` • Visto en: <em>${npc.location}</em>` : ''}</div>
+           <div class="npc-desc">${npc.description}</div>
+           ${npc.notes ? `<div class="npc-notes">"${npc.notes}"</div>` : ''}
+        </div>`;
+      }).join('')
+    : '<div class="text-center italic text-dim">No entablaste lazo ni enemistad duradera con alma alguna.</div>';
+
+  // CARTOGRAPHY
+  const currentLocHtml = currentLocation ? `
+    <div class="loc-current-card">
+      <div class="loc-title">📍 Último Paradero: <strong>${currentLocation.name}</strong></div>
+      <div class="loc-details">
+        <span>Iluminación: ${currentLocation.lighting.replace('_', ' ')}</span> • 
+        <span>Peligro: <strong class="danger-${currentLocation.dangerLevel}">${currentLocation.dangerLevel.toUpperCase()}</strong></span>
+      </div>
+      <div class="loc-desc">${currentLocation.description}</div>
+      ${currentLocation.exits && currentLocation.exits.length > 0 ? `
+        <div class="loc-exits">
+          <strong>Rutas adyacentes observadas:</strong> ${currentLocation.exits.map(e => `<em>${e}</em>`).join(' • ')}
+        </div>
+      ` : ''}
+    </div>
+  ` : '';
+
+  const visitedListHtml = visitedLocations && visitedLocations.length > 0
+    ? `<div class="visited-tags">${visitedLocations.map(v => `<span class="visited-pill">❖ ${v}</span>`).join(' ')}</div>`
+    : '<div class="text-dim italic">Tus pasos quedaron sepultados en la sombra.</div>';
 
   // Dice Log Table - REVERSED FOR CHRONOLOGICAL ORDER
   const chronologicalDiceLog = diceLog ? [...diceLog].reverse() : [];
@@ -258,6 +316,47 @@ export const exportStoryToPDF = (gameState: GameState) => {
            margin-top: 2px;
         }
 
+        /* --- NPCS (DRAMATIS PERSONAE) --- */
+        .npc-grid {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 12px;
+           margin-top: 10px;
+        }
+        .npc-card {
+           border: 1px solid var(--c-border);
+           padding: 10px;
+           background: #fdfdfd;
+           page-break-inside: avoid;
+        }
+        .npc-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 4px; }
+        .npc-name { font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.9rem; color: #222; }
+        .npc-badges { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-dim); }
+        .npc-role { color: var(--c-accent); font-weight: 600; }
+        .npc-status { font-weight: bold; }
+        .npc-status.status-muerto { color: var(--c-blood); }
+        .npc-status.status-herido { color: #b86500; }
+        .npc-status.status-vivo { color: #2e6040; }
+        .npc-meta { font-size: 0.75rem; color: var(--c-dim); margin-bottom: 6px; }
+        .npc-desc { font-size: 0.85rem; color: #444; line-height: 1.25; margin-bottom: 4px; }
+        .npc-notes { font-size: 0.8rem; font-style: italic; color: #555; border-left: 2px solid var(--c-accent); padding-left: 6px; margin-top: 4px; }
+
+        /* --- CARTOGRAPHY --- */
+        .loc-current-card {
+           border: 1px solid var(--c-border);
+           background: #faf8f5;
+           padding: 10px 14px;
+           margin-bottom: 12px;
+           page-break-inside: avoid;
+        }
+        .loc-title { font-family: 'Cinzel', serif; font-size: 0.95rem; color: #222; margin-bottom: 3px; }
+        .loc-details { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-dim); margin-bottom: 5px; }
+        .loc-details .danger-mortal, .loc-details .danger-alto { color: var(--c-blood); font-weight: bold; }
+        .loc-desc { font-size: 0.85rem; font-style: italic; color: #444; margin-bottom: 6px; }
+        .loc-exits { font-size: 0.75rem; color: var(--c-dim); border-top: 1px dashed var(--c-border); padding-top: 4px; }
+        .visited-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; margin-bottom: 12px; }
+        .visited-pill { background: #f0ede8; font-family: 'Cinzel', serif; font-size: 0.7rem; padding: 3px 8px; border-radius: 2px; color: #333; border: 1px solid #e2ddd5; }
+
         /* --- NARRATIVE --- */
         .narrative-text p { text-indent: 1.5em; margin: 0 0 10px 0; text-align: justify; }
         .turn-divider { text-align: center; margin: 15px 0; color: var(--c-accent); font-family: 'Cinzel'; font-size: 0.7rem; opacity: 0.6; }
@@ -340,13 +439,18 @@ export const exportStoryToPDF = (gameState: GameState) => {
 
       <div class="page-break"></div>
 
-      <!-- PAGE 3: CODEX (UPDATED LAYOUT) -->
+      <!-- PAGE 3: CODEX & CARTOGRAPHY -->
       <div class="sheet-section">
          <div class="center-title-container">
-          <h2 class="section-title">El Códice</h2>
+          <h2 class="section-title">El Códice y Cartografía</h2>
         </div>
 
         <div class="codex-layout">
+           <div class="codex-h3">Cartografía y Pasos de la Penumbra</div>
+           ${currentLocHtml}
+           <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-dim); margin-top: 8px;">Senderos Explorados:</div>
+           ${visitedListHtml}
+
            <div class="codex-h3">Hilos del Destino</div>
            <div class="threads-container">
               ${threadsList}
@@ -361,7 +465,19 @@ export const exportStoryToPDF = (gameState: GameState) => {
 
       <div class="page-break"></div>
 
-      <!-- PAGE 4+: NARRATIVE -->
+      <!-- PAGE 4: DRAMATIS PERSONAE -->
+      <div class="sheet-section">
+        <div class="center-title-container">
+          <h2 class="section-title">Dramatis Personae: Almas de la Penumbra</h2>
+        </div>
+        <div class="npc-grid">
+          ${npcsList}
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+
+      <!-- PAGE 5+: NARRATIVE -->
       <div class="sheet-section">
         <div class="center-title-container">
           <h2 class="section-title">La Historia</h2>

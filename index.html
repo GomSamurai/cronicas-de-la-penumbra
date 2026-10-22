@@ -83,6 +83,46 @@
         pointer-events: none;
       }
 
+      /* Atmospheric Tension Vignettes */
+      .vignette-combate {
+        background: radial-gradient(circle at center, transparent 35%, rgba(138, 28, 28, 0.25) 75%, rgba(138, 28, 28, 0.6) 100%);
+        animation: combatPulse 2s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .vignette-peligro {
+        background: radial-gradient(circle at center, transparent 45%, rgba(180, 80, 10, 0.2) 80%, rgba(140, 50, 10, 0.45) 100%);
+        animation: dangerPulse 4s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .vignette-agonico {
+        background: radial-gradient(circle at center, transparent 25%, rgba(110, 10, 10, 0.4) 65%, rgba(40, 0, 0, 0.85) 100%);
+        animation: agonyPulse 1.2s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .vignette-sospecha {
+        background: radial-gradient(circle at center, transparent 40%, rgba(20, 25, 40, 0.3) 75%, rgba(5, 5, 15, 0.6) 100%);
+        pointer-events: none;
+      }
+      .vignette-tension {
+        background: radial-gradient(circle at center, transparent 40%, rgba(70, 50, 20, 0.2) 75%, rgba(40, 30, 10, 0.5) 100%);
+        pointer-events: none;
+      }
+
+      @keyframes combatPulse {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 0.95; transform: scale(1.015); }
+      }
+      @keyframes dangerPulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 0.85; }
+      }
+      @keyframes agonyPulse {
+        0%, 100% { opacity: 0.7; transform: scale(1); filter: contrast(105%); }
+        25% { opacity: 1; transform: scale(1.02); filter: contrast(125%); }
+        45% { opacity: 0.75; transform: scale(1.005); }
+        65% { opacity: 0.95; transform: scale(1.015); filter: contrast(120%); }
+      }
+
       /* Ash/Ember Particles */
       .ash-particle {
         position: absolute;

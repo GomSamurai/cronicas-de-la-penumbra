@@ -1,4 +1,5 @@
 // Audio Service using Web Audio API for multi-layered procedural sound generation
+import { TensionLevel } from '../types';
 
 export type AudioLayer = 'drone' | 'orchestra' | 'piano' | 'texture' | 'chimes' | 'choir' | 'subbass';
 export type AudioMode = 'intro' | 'game';
@@ -6,6 +7,7 @@ export type AudioMode = 'intro' | 'game';
 class AudioService {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private masterFilter: BiquadFilterNode | null = null;
   private reverbNode: ConvolverNode | null = null;
   private isInitialized: boolean = false;
   
@@ -15,6 +17,10 @@ class AudioService {
   // Mute State
   private isMutedState: boolean = false;
   private preMuteVolume: number = 1.0;
+
+  // Tension & Reactive Audio
+  private currentTension: TensionLevel = 'calma';
+  private isReactiveAudioEnabled: boolean = true;
 
   // Layer Gains
   private layerGains: Record<AudioLayer, GainNode | null> = {
@@ -28,6 +34,7 @@ class AudioService {
   };
 
   private heartbeatGain: GainNode | null = null;
+  private combatDrumsGain: GainNode | null = null;
 
   // State
   private layerMuted: Record<AudioLayer, boolean> = {
@@ -53,6 +60,7 @@ class AudioService {
   private chimesInterval: number | null = null;
   private choirInterval: number | null = null;
   private subbassInterval: number | null = null;
+  private combatDrumsInterval: number | null = null;
 
   // Musical Scales (Base frequencies in Hz for 2nd octave)
   private scales = {
@@ -69,9 +77,16 @@ class AudioService {
     if (this.isInitialized) return;
     
     this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Master Filter (for muffled agony/shock effect)
+    this.masterFilter = this.ctx.createBiquadFilter();
+    this.masterFilter.type = 'lowpass';
+    this.masterFilter.frequency.value = 20000;
+    this.masterFilter.connect(this.ctx.destination);
+
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = this.isMutedState ? 0 : this.masterVolumeValue;
-    this.masterGain.connect(this.ctx.destination);
+    this.masterGain.connect(this.masterFilter);
     
     // Create procedural reverb
     this.createReverb();
@@ -103,7 +118,12 @@ class AudioService {
     // Heartbeat Gain (Special Layer)
     this.heartbeatGain = this.ctx.createGain();
     this.heartbeatGain.connect(this.masterGain);
-    this.heartbeatGain.gain.value = 0.6; // Base volume
+    this.heartbeatGain.gain.value = 0.6;
+
+    // Combat War Drums Gain
+    this.combatDrumsGain = this.ctx.createGain();
+    this.combatDrumsGain.connect(this.masterGain);
+    this.combatDrumsGain.gain.value = 0;
 
     this.pickRandomScale();
     this.isInitialized = true;
@@ -115,7 +135,6 @@ class AudioService {
      const keys = Object.keys(this.scales) as (keyof typeof this.scales)[];
      const randKey = keys[Math.floor(Math.random() * keys.length)];
      this.currentScale = this.scales[randKey];
-     console.log("[AudioService] Escala generada:", randKey);
   }
 
   private createReverb() {
@@ -129,7 +148,7 @@ class AudioService {
     const right = impulse.getChannelData(1);
     
     for (let i = 0; i < length; i++) {
-       const decay = Math.exp(-i / (rate * 1.5)); // Exponential decay curve
+       const decay = Math.exp(-i / (rate * 1.5));
        left[i] = (Math.random() * 2 - 1) * decay;
        right[i] = (Math.random() * 2 - 1) * decay;
     }
@@ -172,12 +191,30 @@ class AudioService {
     return this.isMutedState;
   }
 
+  public toggleReactiveAudio(): boolean {
+    this.isReactiveAudioEnabled = !this.isReactiveAudioEnabled;
+    if (!this.isReactiveAudioEnabled) {
+      this.stopCombatDrums();
+      if (this.masterFilter && this.ctx) {
+        this.masterFilter.frequency.setTargetAtTime(20000, this.ctx.currentTime, 0.5);
+      }
+    }
+    return this.isReactiveAudioEnabled;
+  }
+
+  public isReactive(): boolean {
+    return this.isReactiveAudioEnabled;
+  }
+
+  public getTension(): TensionLevel {
+    return this.currentTension;
+  }
+
   public setMode(mode: AudioMode) {
     if (!this.ctx) return;
     this.currentMode = mode;
     
     const now = this.ctx.currentTime;
-    // Mix target levels for each layer depending on game state
     const targetGains: Record<AudioLayer, number> = mode === 'intro' 
       ? { drone: 0.15, orchestra: 0.3, piano: 0.4, texture: 0.05, chimes: 0.2, choir: 0.3, subbass: 0.4 }
       : { drone: 0.25, orchestra: 0.2, piano: 0.3, texture: 0.15, chimes: 0.1, choir: 0.15, subbass: 0.3 };
@@ -185,13 +222,185 @@ class AudioService {
     Object.keys(targetGains).forEach(k => {
       const key = k as AudioLayer;
       if (!this.layerMuted[key] && this.layerGains[key]) {
-        this.layerGains[key]!.gain.setTargetAtTime(targetGains[key], now, 3); // Smooth 3s transition
+        this.layerGains[key]!.gain.setTargetAtTime(targetGains[key], now, 3);
       }
     });
 
     if (mode === 'intro') {
        this.stopHeartbeat();
+       this.stopCombatDrums();
     }
+  }
+
+  // --- ADAPTIVE TENSION SYSTEM ---
+  public updateTension(tension: TensionLevel = 'calma', hp?: number, maxHp?: number, sanity?: number) {
+    if (!this.ctx || this.currentMode !== 'game') return;
+
+    // Detect tension escalation
+    const tensionRanks: Record<TensionLevel, number> = {
+      calma: 1,
+      sospecha: 2,
+      tension: 3,
+      peligro: 4,
+      combate: 5,
+      agonico: 6
+    };
+    const prevRank = tensionRanks[this.currentTension] || 1;
+    const newRank = tensionRanks[tension] || 1;
+
+    // Trigger sharp danger chord on sudden escalation
+    if (newRank >= 4 && newRank > prevRank) {
+      this.playDangerStab();
+    }
+
+    this.currentTension = tension;
+
+    if (!this.isReactiveAudioEnabled) return;
+
+    const now = this.ctx.currentTime;
+
+    // Muffled auditory shock in agony/near death
+    const isAgony = tension === 'agonico' || (hp !== undefined && maxHp !== undefined && hp < maxHp * 0.25);
+    if (this.masterFilter) {
+      const targetCutoff = isAgony ? 950 : 20000;
+      this.masterFilter.frequency.setTargetAtTime(targetCutoff, now, 1.2);
+    }
+
+    // War drums toggle
+    if (tension === 'combate') {
+      this.startCombatDrums();
+    } else {
+      this.stopCombatDrums();
+    }
+
+    // Occasional sanity whispers when mentally broken
+    if (sanity !== undefined && sanity < 30 && Math.random() < 0.5) {
+      setTimeout(() => this.playSanityWhisper(), 800 + Math.random() * 2000);
+    }
+
+    // Fine-tuned target gains per tension level
+    const tensionGains: Record<TensionLevel, Record<AudioLayer, number>> = {
+      calma: {
+        drone: 0.12, orchestra: 0.15, piano: 0.35, texture: 0.05, chimes: 0.25, choir: 0.10, subbass: 0.20
+      },
+      sospecha: {
+        drone: 0.22, orchestra: 0.12, piano: 0.20, texture: 0.22, chimes: 0.30, choir: 0.15, subbass: 0.15
+      },
+      tension: {
+        drone: 0.28, orchestra: 0.22, piano: 0.18, texture: 0.20, chimes: 0.15, choir: 0.20, subbass: 0.35
+      },
+      peligro: {
+        drone: 0.38, orchestra: 0.32, piano: 0.10, texture: 0.30, chimes: 0.05, choir: 0.28, subbass: 0.48
+      },
+      combate: {
+        drone: 0.32, orchestra: 0.38, piano: 0.05, texture: 0.20, chimes: 0.00, choir: 0.22, subbass: 0.55
+      },
+      agonico: {
+        drone: 0.45, orchestra: 0.10, piano: 0.12, texture: 0.35, chimes: 0.00, choir: 0.32, subbass: 0.60
+      }
+    };
+
+    const target = tensionGains[tension] || tensionGains.calma;
+    Object.keys(target).forEach(k => {
+      const key = k as AudioLayer;
+      if (!this.layerMuted[key] && this.layerGains[key]) {
+        this.layerGains[key]!.gain.setTargetAtTime(target[key], now, 2.5);
+      }
+    });
+
+    // Update heartbeat
+    if (hp !== undefined && maxHp !== undefined) {
+      this.updateHeartbeat(hp, maxHp);
+    }
+  }
+
+  // --- COMBAT WAR DRUMS (Procedural Percussion) ---
+  private startCombatDrums() {
+    if (this.combatDrumsInterval) return;
+    if (!this.ctx || !this.combatDrumsGain) return;
+
+    this.combatDrumsGain.gain.setTargetAtTime(0.7, this.ctx.currentTime, 1.0);
+
+    let step = 0;
+    const bpm = 80;
+    const intervalMs = (60 / bpm) * 1000;
+
+    const tick = () => {
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      // Pattern: Beat 1 (accent), Beat 2 (normal), Beat 3 (double tap), Beat 4 (normal)
+      const isAccent = step % 4 === 0;
+      this.playWarDrum(now, isAccent);
+      if (step % 4 === 2) {
+        this.playWarDrum(now + (intervalMs / 2000), false);
+      }
+      step = (step + 1) % 4;
+    };
+
+    tick();
+    this.combatDrumsInterval = window.setInterval(tick, intervalMs);
+  }
+
+  private stopCombatDrums() {
+    if (this.combatDrumsGain && this.ctx) {
+      this.combatDrumsGain.gain.setTargetAtTime(0, this.ctx.currentTime, 1.5);
+    }
+    if (this.combatDrumsInterval) {
+      window.clearInterval(this.combatDrumsInterval);
+      this.combatDrumsInterval = null;
+    }
+  }
+
+  private playWarDrum(time: number, isAccent: boolean) {
+    if (!this.ctx || !this.combatDrumsGain || this.isMutedState) return;
+
+    // Drum oscillator: fast pitch drop
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    const startFreq = isAccent ? 140 : 100;
+    const endFreq = isAccent ? 45 : 35;
+    osc.frequency.setValueAtTime(startFreq, time);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, time + 0.18);
+
+    filter.type = 'lowpass';
+    filter.frequency.value = isAccent ? 250 : 180;
+
+    const baseVol = isAccent ? 0.45 : 0.28;
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(baseVol, time + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + (isAccent ? 0.45 : 0.3));
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.combatDrumsGain);
+
+    osc.start(time);
+    osc.stop(time + 0.5);
+
+    // Subtle noise impact for drum skin slap
+    const noiseBuffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.05), this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBuffer.length; i++) {
+      output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.01));
+    }
+    const noiseSource = this.ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 400;
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(isAccent ? 0.15 : 0.08, time);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.combatDrumsGain);
+
+    noiseSource.start(time);
+    noiseSource.stop(time + 0.06);
   }
 
   public toggleLayer(layer: AudioLayer): boolean {
@@ -270,8 +479,7 @@ class AudioService {
 
   public randomize() {
     if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    this.pickRandomScale(); // Cambiar escala aleatoriamente en el juego puede ser un evento guay
+    this.pickRandomScale();
     this.restartProceduralLoops();
   }
 
@@ -309,14 +517,14 @@ class AudioService {
       const white = Math.random() * 2 - 1;
       data[i] = (lastOut + (0.02 * white)) / 1.02;
       lastOut = data[i];
-      data[i] *= 2.0; // Reduced drone volume
+      data[i] *= 2.0;
     }
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 60; // Lowered cutoff to make it subbier and less noisy
+    filter.frequency.value = 60;
     source.connect(filter);
     filter.connect(this.layerGains.drone);
     source.start();
@@ -336,7 +544,6 @@ class AudioService {
          const gain = this.ctx.createGain();
          const filter = this.ctx.createBiquadFilter();
          osc.type = 'sawtooth';
-         // Use dynamic scale
          const freq = this.currentScale[Math.floor(Math.random() * this.currentScale.length)] * (Math.random() > 0.5 ? 2 : 1);
          osc.frequency.value = freq;
          osc.detune.value = (Math.random() * 20) - 10;
@@ -375,7 +582,7 @@ class AudioService {
     if (!this.ctx || !this.layerGains.piano) return;
     const playPhrase = () => {
        if (!this.ctx || this.layerMuted.piano) return;
-       if (Math.random() > 0.3) return; // Play less frequently
+       if (Math.random() > 0.3) return;
        
        const now = this.ctx.currentTime;
        const numNotes = 2 + Math.floor(Math.random() * 3);
@@ -389,8 +596,8 @@ class AudioService {
            osc.frequency.value = freq;
            
            gain.gain.setValueAtTime(0, now + timeOffset);
-           gain.gain.linearRampToValueAtTime(0.15, now + timeOffset + 0.05); // Attack
-           gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 3); // Long decay
+           gain.gain.linearRampToValueAtTime(0.15, now + timeOffset + 0.05);
+           gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 3);
            
            osc.connect(gain);
            gain.connect(this.layerGains.piano!); 
@@ -398,7 +605,7 @@ class AudioService {
            osc.start(now + timeOffset);
            osc.stop(now + timeOffset + 4);
            
-           timeOffset += 0.6 + Math.random() * 0.8; // Slower, more deliberate timing
+           timeOffset += 0.6 + Math.random() * 0.8;
        }
     };
     this.pianoInterval = window.setInterval(playPhrase, 5000); 
@@ -420,7 +627,7 @@ class AudioService {
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
         data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-        data[i] *= 0.05; // Considerably reduced noise volume
+        data[i] *= 0.05;
         b6 = white * 0.115926;
     }
     const source = this.ctx.createBufferSource();
@@ -429,12 +636,12 @@ class AudioService {
     
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass'; 
-    filter.frequency.value = 250; // Darker noise
+    filter.frequency.value = 250;
     filter.Q.value = 0.5; 
     
     const lfo = this.ctx.createOscillator();
     lfo.type = 'sine';
-    lfo.frequency.value = 0.05; // Very slow sweeping
+    lfo.frequency.value = 0.05;
     const lfoGain = this.ctx.createGain();
     lfoGain.gain.value = 100; 
     lfo.connect(lfoGain);
@@ -462,13 +669,12 @@ class AudioService {
            const gain = this.ctx.createGain();
            osc.type = 'triangle';
            
-           // Octave 4 or 5
            const freq = this.currentScale[Math.floor(Math.random() * this.currentScale.length)] * 8; 
            osc.frequency.value = freq;
            
            gain.gain.setValueAtTime(0, now + timeOffset);
-           gain.gain.linearRampToValueAtTime(0.08, now + timeOffset + 0.02); // Fast attack
-           gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 1.5); // Quick decay
+           gain.gain.linearRampToValueAtTime(0.08, now + timeOffset + 0.02);
+           gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 1.5);
            
            osc.connect(gain);
            gain.connect(this.layerGains.chimes!); 
@@ -476,7 +682,7 @@ class AudioService {
            osc.start(now + timeOffset);
            osc.stop(now + timeOffset + 2);
            
-           timeOffset += 0.2 + Math.random() * 0.1; // Fast arpeggio
+           timeOffset += 0.2 + Math.random() * 0.1;
        }
     };
     this.chimesInterval = window.setInterval(playArp, 7000); 
@@ -501,7 +707,6 @@ class AudioService {
        const freq = this.currentScale[Math.floor(Math.random() * this.currentScale.length)] * 2;
        osc.frequency.value = freq;
        
-       // Formant filtering (simulating vocal tract 'ah' or 'oh')
        filter1.type = 'bandpass';
        filter1.frequency.value = 600;
        filter1.Q.value = 2;
@@ -537,10 +742,9 @@ class AudioService {
        const gain = this.ctx.createGain();
        
        osc.type = 'sine';
-       // Very low frequency (around 30-50Hz)
-       const baseFreq = this.currentScale[0] / 2; // Root note 1 octave down
+       const baseFreq = this.currentScale[0] / 2;
        osc.frequency.setValueAtTime(baseFreq * 1.5, now);
-       osc.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.3); // Pitch drop
+       osc.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.3);
        
        gain.gain.setValueAtTime(0, now);
        gain.gain.linearRampToValueAtTime(0.6, now + 0.1); 
@@ -555,7 +759,70 @@ class AudioService {
     this.subbassInterval = window.setInterval(playHit, 11000); 
   }
 
-  // --- SFX ---
+  // --- SPECIAL ADAPTIVE SFX ---
+  public playDangerStab() {
+    if (!this.ctx || !this.masterGain || this.isMutedState) return;
+    const now = this.ctx.currentTime;
+
+    const freqs = [185.00, 261.63, 369.99]; // F#3, C4, F#4 (Tritone clash)
+    freqs.forEach(freq => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      const filter = this.ctx!.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq + (Math.random() * 6 - 3), now);
+      osc.frequency.linearRampToValueAtTime(freq * 0.95, now + 1.2);
+
+      filter.type = 'bandpass';
+      filter.frequency.value = 800 + Math.random() * 400;
+      filter.Q.value = 3.0;
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain!);
+
+      osc.start(now);
+      osc.stop(now + 1.6);
+    });
+  }
+
+  public playSanityWhisper() {
+    if (!this.ctx || !this.masterGain || this.isMutedState) return;
+    const now = this.ctx.currentTime;
+    const bufferSize = Math.floor(this.ctx.sampleRate * 1.5);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1200, now);
+    filter.frequency.linearRampToValueAtTime(600, now + 1.4);
+    filter.Q.value = 5.0;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    source.start(now);
+    source.stop(now + 1.5);
+  }
+
+  // --- GENERAL SFX ---
   public playClick() {
     if (!this.ctx || !this.masterGain) return;
     const osc = this.ctx.createOscillator();

@@ -10,6 +10,8 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
   const [isInitialized, setIsInitialized] = useState(false);
   const [masterVol, setMasterVol] = useState(1.0);
   const [isMuted, setIsMuted] = useState(false);
+  const [isReactive, setIsReactive] = useState(true);
+  const [activeTension, setActiveTension] = useState<string>('calma');
   const [mutedLayers, setMutedLayers] = useState({
     drone: false,
     orchestra: false,
@@ -22,9 +24,10 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
 
   // Initialize checks
   useEffect(() => {
-    // Check initial states
     setMasterVol(audioSystem.getMasterVolume());
     setIsMuted(audioSystem.isMuted());
+    setIsReactive(audioSystem.isReactive());
+    setActiveTension(audioSystem.getTension());
     setMutedLayers({
       drone: audioSystem.isLayerMuted('drone'),
       orchestra: audioSystem.isLayerMuted('orchestra'),
@@ -39,7 +42,6 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
   const initAudio = async () => {
     await audioSystem.init();
     setIsInitialized(true);
-    // Only open settings on init if not in header mode
     if (variant === 'floating') {
       setIsOpen(true);
     }
@@ -64,7 +66,6 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
     const newMuteState = audioSystem.toggleMute();
     setIsMuted(newMuteState);
     if (!newMuteState) {
-       // If unmuting, update slider visual to restored volume
        setMasterVol(audioSystem.getMasterVolume());
     } else {
        setMasterVol(0);
@@ -75,9 +76,8 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
     const val = parseFloat(e.target.value);
     setMasterVol(val);
     audioSystem.setMasterVolume(val);
-    // If user manually drags slider, unmute if muted
     if (isMuted && val > 0) {
-       audioSystem.toggleMute(); // This logic might need refinement in service, but essentially acts as unmute
+       audioSystem.toggleMute();
        setIsMuted(false);
     }
   };
@@ -85,6 +85,12 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
   const toggleLayer = (layer: 'drone' | 'orchestra' | 'piano' | 'texture' | 'chimes' | 'choir' | 'subbass') => {
     const muted = audioSystem.toggleLayer(layer);
     setMutedLayers(prev => ({ ...prev, [layer]: muted }));
+    audioSystem.playClick();
+  };
+
+  const toggleReactive = () => {
+    const nextState = audioSystem.toggleReactiveAudio();
+    setIsReactive(nextState);
     audioSystem.playClick();
   };
 
@@ -129,13 +135,16 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
               </svg>
            </button>
 
-           {/* Dropdown Modal (Shared logic) */}
+           {/* Dropdown Modal */}
            {isOpen && <SettingsModal 
               modalClass={modalClass} 
               masterVol={masterVol} 
               changeVolume={changeVolume} 
               handleRandom={handleRandom} 
               toggleLayer={toggleLayer} 
+              toggleReactive={toggleReactive}
+              isReactive={isReactive}
+              activeTension={activeTension}
               mutedLayers={mutedLayers} 
               setIsOpen={setIsOpen} 
            />}
@@ -143,7 +152,7 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
      );
   }
 
-  // --- RENDER FOR FLOATING VARIANT (Original) ---
+  // --- RENDER FOR FLOATING VARIANT ---
   const buttonClass = `fixed top-4 right-4 z-[100] w-10 h-10 rounded-full border shadow-[0_0_15px_rgba(0,0,0,0.5)] backdrop-blur-sm ${isOpen ? 'bg-gold text-void border-gold' : 'bg-black/50 text-gold border-gold-dim hover:border-gold hover:scale-110'}`;
 
   return (
@@ -164,6 +173,9 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
           changeVolume={changeVolume} 
           handleRandom={handleRandom} 
           toggleLayer={toggleLayer} 
+          toggleReactive={toggleReactive}
+          isReactive={isReactive}
+          activeTension={activeTension}
           mutedLayers={mutedLayers} 
           setIsOpen={setIsOpen} 
        />}
@@ -172,17 +184,46 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
 };
 
 // Extracted Modal for reuse
-const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, toggleLayer, mutedLayers, setIsOpen }: any) => (
+const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, toggleLayer, toggleReactive, isReactive, activeTension, mutedLayers, setIsOpen }: any) => (
   <>
     <div className="fixed inset-0 z-[98]" onClick={() => setIsOpen(false)}></div>
-    <div className={`${modalClass} z-[99] w-64 bg-panel border border-gold-dim rounded-xl shadow-2xl p-5 animate-fade-in`}>
-       <div className="flex justify-between items-center mb-4 border-b border-gold-dim/30 pb-2">
-          <span className="text-xs font-display font-bold uppercase tracking-widest text-gold">Atmósfera</span>
-          <button onClick={handleRandom} className="text-parchment hover:text-white hover:scale-110 transition-transform" title="Aleatorizar">
-            🎲
+    <div className={`${modalClass} z-[99] w-72 bg-panel border border-gold-dim rounded-xl shadow-2xl p-5 animate-fade-in`}>
+       <div className="flex justify-between items-center mb-3 border-b border-gold-dim/30 pb-2">
+          <span className="text-xs font-display font-bold uppercase tracking-widest text-gold">Atmósfera Sonora</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${
+              activeTension === 'combate' || activeTension === 'agonico' ? 'border-blood text-blood-bright bg-blood/20 animate-pulse' :
+              activeTension === 'peligro' ? 'border-amber-700 text-amber-400 bg-amber-950/30' :
+              activeTension === 'tension' ? 'border-gold-dim text-gold bg-gold/10' :
+              'border-zinc-800 text-zinc-500 bg-zinc-900'
+            }`}>
+              {activeTension}
+            </span>
+            <button onClick={handleRandom} className="text-parchment hover:text-white hover:scale-110 transition-transform" title="Aleatorizar escala">
+              🎲
+            </button>
+          </div>
+       </div>
+
+       {/* Reactive Audio Toggle */}
+       <div className="mb-4 bg-void/50 p-2.5 rounded-lg border border-gold-dim/20 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-parchment">Dramatismo Reactivo</span>
+            <span className="text-[8px] text-zinc-500">Adapta música al peligro</span>
+          </div>
+          <button
+            onClick={toggleReactive}
+            className={`px-2 py-0.5 rounded text-[9px] uppercase font-display font-bold border transition-colors ${
+              isReactive
+                ? 'bg-gold/20 border-gold text-gold shadow-sm'
+                : 'bg-zinc-900 border-zinc-700 text-zinc-500'
+            }`}
+          >
+            {isReactive ? 'ACTIVO' : 'MANUAL'}
           </button>
        </div>
-       <div className="mb-6">
+
+       <div className="mb-5">
           <label className="flex justify-between text-[10px] uppercase tracking-wider text-parchment-dim mb-2">
              <span>Volumen Maestro</span>
              <span>{Math.round(masterVol * 100)}%</span>
@@ -197,7 +238,8 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
             className="w-full h-1 bg-void rounded-lg appearance-none cursor-pointer accent-gold"
           />
        </div>
-       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+
+       <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
           {[
             { id: 'drone', label: 'Vacío (Drone)' },
             { id: 'orchestra', label: 'Orquesta' },
@@ -210,7 +252,7 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
              <button
                 key={layer.id}
                 onClick={() => toggleLayer(layer.id as any)}
-                className={`w-full flex justify-between items-center px-3 py-2 rounded border text-[10px] uppercase tracking-widest transition-all
+                className={`w-full flex justify-between items-center px-3 py-1.5 rounded border text-[10px] uppercase tracking-widest transition-all
                    ${!mutedLayers[layer.id] 
                       ? 'bg-gold/10 border-gold text-bone shadow-[0_0_10px_rgba(197,160,89,0.1)]' 
                       : 'bg-void border-zinc-800 text-zinc-600 hover:border-zinc-600'}
@@ -223,8 +265,8 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
              </button>
           ))}
        </div>
-       <div className="mt-4 text-[8px] text-center text-zinc-600 uppercase tracking-widest">
-          Sonido Procedural
+       <div className="mt-3 text-[8px] text-center text-zinc-600 uppercase tracking-widest">
+          Sintetizador Procedural Web Audio
        </div>
     </div>
   </>
