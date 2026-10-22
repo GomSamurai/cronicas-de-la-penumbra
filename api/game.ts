@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
+import type { Schema } from "@google/genai";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { Character, GameState, TokenUsage } from "../types";
 
