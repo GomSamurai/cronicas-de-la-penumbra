@@ -119,30 +119,30 @@ const ARCHETYPES = Object.keys(PRESET_DATA);
 
 // Gothic Sigils for Tabula Rasa custom characters
 export const GOTHIC_SIGILS = [
-  { icon: "⚡", label: "Relámpago de la Forja" },
-  { icon: "🩸", label: "Gota de Sangre" },
+  { icon: "⚡", label: "Relámpago" },
+  { icon: "🩸", label: "Sangre" },
   { icon: "🥀", label: "Rosa Marchita" },
-  { icon: "⚰️", label: "Ataúd de Roble" },
-  { icon: "🗡️", label: "Daga Traicionera" },
-  { icon: "⚔️", label: "Espadas Cruzadas" },
-  { icon: "🪓", label: "Hacha de Verdugo" },
-  { icon: "🏹", label: "Arco del Cazador" },
-  { icon: "🛡️", label: "Escudo Desconchado" },
-  { icon: "📜", label: "Papiro Hereje" },
-  { icon: "👑", label: "Corona Caída" },
-  { icon: "👁️", label: "Ojo de la Penumbra" },
-  { icon: "🧵", label: "Hilos del Destino" },
-  { icon: "🎭", label: "Máscara Fúnebre" },
-  { icon: "💀", label: "Calavera del Mártir" },
-  { icon: "🕯️", label: "Cirio de Cera Negra" },
-  { icon: "🐺", label: "Lobo de las Cenizas" },
-  { icon: "🗝️", label: "Llave de la Cripta" },
-  { icon: "🔮", label: "Orbe Profético" },
-  { icon: "🧪", label: "Frasco de Veneno" },
-  { icon: "🦅", label: "Cuervo del Presagio" },
-  { icon: "🕷️", label: "Tejedora Nocturna" },
-  { icon: "🔥", label: "Llama de la Pira" },
-  { icon: "⛓️", label: "Grillete de Hierro" }
+  { icon: "⚰️", label: "Ataúd" },
+  { icon: "🗡️", label: "Daga" },
+  { icon: "⚔️", label: "Espadas" },
+  { icon: "🪓", label: "Hacha" },
+  { icon: "🏹", label: "Arco" },
+  { icon: "🛡️", label: "Escudo" },
+  { icon: "📜", label: "Papiro" },
+  { icon: "👑", label: "Corona" },
+  { icon: "👁️", label: "Ojo" },
+  { icon: "🧵", label: "Hilos" },
+  { icon: "🎭", label: "Máscara" },
+  { icon: "💀", label: "Calavera" },
+  { icon: "🕯️", label: "Cirio" },
+  { icon: "🐺", label: "Lobo" },
+  { icon: "🗝️", label: "Llave" },
+  { icon: "🔮", label: "Orbe" },
+  { icon: "🧪", label: "Veneno" },
+  { icon: "🦅", label: "Cuervo" },
+  { icon: "🕷️", label: "Araña" },
+  { icon: "🔥", label: "Pira" },
+  { icon: "⛓️", label: "Grillete" }
 ];
 
 // Configuration constants
@@ -178,12 +178,12 @@ const TRAGIC_SINS = [
 ];
 
 const STAT_DESCRIPTIONS: Record<keyof CharacterAttributes, { icon: string; name: string; desc: string }> = {
-  fuerza: { icon: "⚔️", name: "Fuerza", desc: "Golpe cuerpo a cuerpo, derribo de puertas y proezas físicas extremas." },
-  destreza: { icon: "🏹", name: "Destreza", desc: "Sigilo, evasión, ganzúas finas, acrobacias y reflejos felinos." },
-  constitucion: { icon: "🛡️", name: "Constitución", desc: "Resistencia física, vitalidad máxima y tolerancia a venenos o fatiga." },
-  inteligencia: { icon: "📜", name: "Inteligencia", desc: "Historia, investigación analítica y descifrado de ocultismo arcano." },
-  sabiduria: { icon: "🔮", name: "Sabiduría", desc: "Percepción sensorial, medicina, supervivencia e intuición frente a engaños." },
-  carisma: { icon: "👑", name: "Carisma", desc: "Engaño cortesano, intimidación, persuasión y presencia social magnética." }
+  fuerza: { icon: "⚔️", name: "Fuerza", desc: "Golpe cuerpo a cuerpo, derribo de puertas y proezas físicas." },
+  destreza: { icon: "🏹", name: "Destreza", desc: "Sigilo, evasión, ganzúas finas y reflejos rápidos." },
+  constitucion: { icon: "🛡️", name: "Constitución", desc: "Resistencia física, vitalidad y tolerancia a venenos." },
+  inteligencia: { icon: "📜", name: "Inteligencia", desc: "Historia, investigación analítica y descifrado de ocultismo." },
+  sabiduria: { icon: "🔮", name: "Sabiduría", desc: "Percepción sensorial, medicina, supervivencia e intuición." },
+  carisma: { icon: "👑", name: "Carisma", desc: "Engaño cortesano, intimidación, persuasión y presencia." }
 };
 
 type CreationMode = 'preset' | 'custom' | 'saved';
@@ -309,13 +309,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
   const handleRandomDistribution = () => {
     audioSystem.playDiceRoll();
-    // Start from 10 on all
     const newAttrs: CharacterAttributes = {
       fuerza: 10, destreza: 10, constitucion: 10, inteligencia: 10, sabiduria: 10, carisma: 10
     };
     const keys = Object.keys(newAttrs) as (keyof CharacterAttributes)[];
     
-    // Distribute 12 points randomly
     let pointsToDistribute = MAX_STARTING_POOL;
     while (pointsToDistribute > 0) {
       const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -364,8 +362,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
       console.error("Error al guardar personaje:", e);
     }
 
-    setSaveBanner(`¡${newSavedChar.name} ha sido grabado en el Grimorio de Almas con su sigilo!`);
-    setTimeout(() => setSaveBanner(null), 4000);
+    setSaveBanner(`¡${newSavedChar.name} grabado en el Grimorio de Almas!`);
+    setTimeout(() => setSaveBanner(null), 3500);
   };
 
   // Delete Character from Grimorio
@@ -426,7 +424,6 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
           const merged = [...parsed, ...savedCharacters];
-          // Remove duplicates by name
           const unique = merged.filter((item, index, self) =>
             index === self.findIndex((t) => t.name === item.name)
           );
@@ -445,7 +442,6 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
   const handleStart = () => {
     if (!name.trim()) return;
     
-    // In custom mode, validate points
     if (mode === 'custom') {
       if (pointsUsed > MAX_STARTING_POOL) return;
       if (!customArchetype.trim()) return;
@@ -475,7 +471,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 bg-void text-parchment relative overflow-y-auto selection:bg-blood selection:text-white">
+    <div className="min-h-screen flex items-center justify-center p-2.5 md:py-3 md:px-6 bg-void text-parchment relative selection:bg-blood selection:text-white">
       
       {/* --- ATMOSPHERE --- */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -486,7 +482,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
         {/* Ash Particles */}
         <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
+            {[...Array(18)].map((_, i) => (
                 <div 
                    key={i} 
                    className="ash-particle"
@@ -503,24 +499,24 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         </div>
       </div>
 
-      <div className="max-w-6xl w-full grid lg:grid-cols-12 gap-6 md:gap-8 relative z-10 py-6">
+      <div className="max-w-6xl w-full grid lg:grid-cols-12 gap-3.5 relative z-10 py-1">
         
         {/* Header / Navigation */}
-        <div className="lg:col-span-12 flex justify-between items-center mb-2 border-b border-gold-dim/30 pb-4">
+        <div className="lg:col-span-12 flex justify-between items-center mb-0.5 border-b border-gold-dim/30 pb-2">
           <button 
             onClick={() => { audioSystem.playClick(); onBack(); }}
-            className="flex items-center gap-2 text-stone-300 hover:text-gold transition-colors uppercase text-xs md:text-sm tracking-[0.22em] font-display font-bold group cursor-pointer"
+            className="flex items-center gap-2 text-stone-300 hover:text-gold transition-colors uppercase text-xs md:text-sm tracking-[0.2em] font-display font-semibold group cursor-pointer"
           >
             <span className="group-hover:-translate-x-1 transition-transform text-gold">←</span>
             <span>Regresar a la Penumbra</span>
           </button>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3.5">
              <AudioController variant="header" />
-             <div className="h-5 w-px bg-gold-dim/40 hidden md:block"></div>
-             <div className="flex items-center gap-2.5">
-                <span className="text-gold text-xl filter drop-shadow-[0_0_8px_rgba(197,160,89,0.5)]">⚖️</span>
-                <h1 className="text-2xl md:text-3xl font-display text-bone tracking-widest uppercase font-bold drop-shadow-md">
+             <div className="h-4 w-px bg-gold-dim/30 hidden md:block"></div>
+             <div className="flex items-center gap-2">
+                <span className="text-gold text-lg">⚖️</span>
+                <h1 className="text-xl md:text-2xl font-display text-bone tracking-widest uppercase font-bold drop-shadow-sm">
                   La Vigilia
                 </h1>
              </div>
@@ -529,40 +525,40 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
         {/* MODE SELECTOR TABS (3 TABS) */}
         <div className="lg:col-span-12">
-          <div className="flex flex-wrap bg-black/70 border border-gold-dim/40 rounded-xl p-1.5 gap-2 shadow-xl">
+          <div className="flex flex-wrap bg-black/60 border border-gold-dim/30 rounded-xl p-1 gap-1 shadow-lg">
             <button 
               onClick={() => handleModeChange('preset')}
-              className={`flex-1 min-w-[170px] py-3 px-4 rounded-lg text-xs md:text-sm uppercase font-display font-bold tracking-[0.18em] transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+              className={`flex-1 min-w-[150px] py-2 px-3 rounded-lg text-xs uppercase font-display font-bold tracking-[0.15em] transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 mode === 'preset' 
-                  ? 'gothic-tab-active text-gold border border-gold shadow-[0_0_15px_rgba(197,160,89,0.25)] font-black' 
-                  : 'text-stone-300 hover:text-white hover:bg-white/10'
+                  ? 'gothic-tab-active text-gold border border-gold/70 shadow-sm font-black' 
+                  : 'text-stone-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className="text-base">📜</span>
+              <span>📜</span>
               <span>Destinos Escritos</span>
             </button>
 
             <button 
               onClick={() => handleModeChange('custom')}
-              className={`flex-1 min-w-[170px] py-3 px-4 rounded-lg text-xs md:text-sm uppercase font-display font-bold tracking-[0.18em] transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+              className={`flex-1 min-w-[150px] py-2 px-3 rounded-lg text-xs uppercase font-display font-bold tracking-[0.15em] transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 mode === 'custom' 
-                  ? 'gothic-tab-active text-gold border border-gold shadow-[0_0_15px_rgba(197,160,89,0.25)] font-black' 
-                  : 'text-stone-300 hover:text-white hover:bg-white/10'
+                  ? 'gothic-tab-active text-gold border border-gold/70 shadow-sm font-black' 
+                  : 'text-stone-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className="text-base">⚡</span>
+              <span>⚡</span>
               <span>Tabula Rasa (Forja)</span>
             </button>
 
             <button 
               onClick={() => handleModeChange('saved')}
-              className={`flex-1 min-w-[170px] py-3 px-4 rounded-lg text-xs md:text-sm uppercase font-display font-bold tracking-[0.18em] transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+              className={`flex-1 min-w-[150px] py-2 px-3 rounded-lg text-xs uppercase font-display font-bold tracking-[0.15em] transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 mode === 'saved' 
-                  ? 'gothic-tab-active text-gold border border-gold shadow-[0_0_15px_rgba(197,160,89,0.25)] font-black' 
-                  : 'text-stone-300 hover:text-white hover:bg-white/10'
+                  ? 'gothic-tab-active text-gold border border-gold/70 shadow-sm font-black' 
+                  : 'text-stone-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className="text-base">🕯️</span>
+              <span>🕯️</span>
               <span>Grimorio de Almas ({savedCharacters.length})</span>
             </button>
           </div>
@@ -570,7 +566,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
         {/* NOTIFICATION BANNER */}
         {saveBanner && (
-          <div className="lg:col-span-12 p-3.5 bg-gold/20 border-2 border-gold text-gold font-display text-sm uppercase tracking-widest text-center rounded-xl animate-fade-in shadow-[0_0_25px_rgba(197,160,89,0.4)] font-bold">
+          <div className="lg:col-span-12 p-2.5 bg-gold/15 border border-gold text-gold font-display text-xs uppercase tracking-widest text-center rounded-xl animate-fade-in shadow-sm font-bold">
             {saveBanner}
           </div>
         )}
@@ -581,21 +577,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         {mode === 'preset' && (
           <>
             {/* Left Column: Archetype Showcase (7 cols) */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="gothic-panel rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-70"></div>
+            <div className="lg:col-span-7 space-y-4">
+              <div className="gothic-panel rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
                 
-                <div className="flex items-center justify-between mb-4 border-b border-gold-dim/30 pb-3">
-                  <span className="text-xs md:text-sm uppercase font-display tracking-[0.22em] text-gold font-bold">
+                <div className="flex items-center justify-between mb-3 border-b border-gold-dim/20 pb-2">
+                  <span className="text-xs uppercase font-display tracking-[0.2em] text-gold font-bold">
                     Elige tu Condena Heredada
                   </span>
-                  <span className="text-xs font-mono text-stone-200 font-bold px-2.5 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  <span className="text-xs font-mono text-stone-300 font-semibold px-2 py-0.5 rounded bg-black/50 border border-gold-dim/30">
                     11 Arquetipos
                   </span>
                 </div>
 
-                {/* CUSTOM GOTHIC ARCHETYPE SELECTOR */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6 max-h-56 overflow-y-auto custom-scrollbar p-1">
+                {/* ARCHETYPES COMPACT 4-COLUMN GRID (NO SCROLLBAR) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2.5">
                   {ARCHETYPES.map((archName) => {
                     const info = PRESET_DATA[archName];
                     const isSelected = archetype === archName;
@@ -607,18 +603,16 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                           audioSystem.playClick();
                           setArchetype(archName);
                         }}
-                        className={`text-left p-3 rounded-xl border transition-all flex items-center gap-2.5 group cursor-pointer ${
+                        className={`text-left py-1.5 px-2.5 rounded-lg border transition-all flex items-center gap-2 group cursor-pointer ${
                           isSelected
-                            ? 'bg-gold/25 border-gold shadow-[0_0_15px_rgba(197,160,89,0.35)] text-bone ring-1 ring-gold'
-                            : 'bg-black/60 border-gold-dim/30 hover:border-gold-dim/80 hover:bg-white/10 text-stone-200'
+                            ? 'bg-gold/25 border-gold shadow-[0_0_10px_rgba(197,160,89,0.3)] text-bone'
+                            : 'bg-black/50 border-gold-dim/25 hover:border-gold-dim/60 hover:bg-white/5 text-stone-300'
                         }`}
                       >
-                        <span className="text-xl group-hover:scale-125 transition-transform shrink-0">{info.icon}</span>
-                        <div className="truncate">
-                          <span className={`block text-xs md:text-sm font-display font-bold truncate ${isSelected ? 'text-gold-bright' : 'text-stone-200'}`}>
-                            {archName}
-                          </span>
-                        </div>
+                        <span className="text-sm group-hover:scale-115 transition-transform shrink-0">{info.icon}</span>
+                        <span className={`block text-xs font-display font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${isSelected ? 'text-gold' : 'text-stone-200'}`}>
+                          {archName}
+                        </span>
                       </button>
                     );
                   })}
@@ -626,39 +620,39 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
                 {/* Active Preset Dossier */}
                 {activePresetInfo && (
-                  <div className="bg-black/60 border border-gold-dim/40 rounded-xl p-5 md:p-6 relative overflow-hidden animate-fade-in shadow-inner">
-                    <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="bg-black/50 border border-gold-dim/30 rounded-xl p-3 md:p-3.5 relative overflow-hidden animate-fade-in shadow-inner">
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <div className="flex items-center gap-2.5 mb-1">
-                          <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(197,160,89,0.4)]">{activePresetInfo.icon}</span>
-                          <h3 className="text-2xl md:text-3xl font-display font-bold text-bone tracking-wide">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xl filter drop-shadow-[0_0_6px_rgba(197,160,89,0.3)]">{activePresetInfo.icon}</span>
+                          <h3 className="text-lg md:text-xl font-display font-bold text-bone tracking-wide">
                             {activePresetInfo.name}
                           </h3>
                         </div>
-                        <span className="text-sm uppercase tracking-widest text-amber-200/90 font-serif italic font-bold">
+                        <span className="text-xs uppercase tracking-wider text-amber-200/90 font-serif italic font-semibold">
                           {archetype}
                         </span>
                       </div>
-                      <span className="text-xs uppercase tracking-wider px-2.5 py-1 rounded bg-black/80 border border-gold text-gold font-mono font-bold">
+                      <span className="text-xs uppercase tracking-wider px-2 py-0.5 rounded bg-black/70 border border-gold-dim/50 text-gold font-mono font-medium">
                         Predestinado
                       </span>
                     </div>
 
                     {/* Confession Quote */}
-                    <div className="my-4 pl-4 border-l-2 border-gold italic text-base md:text-lg font-serif text-stone-200 leading-relaxed bg-void/40 p-4 rounded-r-lg shadow-sm">
+                    <div className="my-2.5 pl-3.5 border-l-2 border-gold-dim/60 italic text-sm font-serif text-stone-200 leading-relaxed bg-void/30 p-2.5 rounded-r-lg">
                       "{activePresetInfo.bio}"
                     </div>
 
                     {/* Specialization & Starting Items */}
-                    <div className="space-y-3 pt-3 border-t border-white/10 text-sm">
-                      <div className="flex items-start gap-2.5">
-                        <span className="text-gold font-bold uppercase tracking-wider text-xs w-28 shrink-0 font-display">Especialidad:</span>
-                        <span className="text-stone-200 italic font-serif leading-snug">{activePresetInfo.specialization}</span>
+                    <div className="space-y-2 pt-2 border-t border-white/5 text-xs">
+                      <div className="flex items-start gap-2">
+                        <span className="text-gold-dim font-bold uppercase tracking-wider text-xs w-24 shrink-0 font-display">Especialidad:</span>
+                        <span className="text-stone-200 italic font-serif leading-tight">{activePresetInfo.specialization}</span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-gold font-bold uppercase tracking-wider text-xs w-28 shrink-0 font-display">Ajuar Inicial:</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-gold-dim font-bold uppercase tracking-wider text-xs w-24 shrink-0 font-display">Ajuar Inicial:</span>
                         {activePresetInfo.startingItems.map((item, itIdx) => (
-                          <span key={itIdx} className="relic-card px-2.5 py-1 rounded text-xs font-serif text-stone-100 border border-gold-dim/50 bg-black/70 shadow-sm">
+                          <span key={itIdx} className="relic-card px-2 py-0.5 rounded text-xs font-serif text-stone-200 border border-gold-dim/30 bg-black/50">
                             ✦ {item}
                           </span>
                         ))}
@@ -670,29 +664,29 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
             </div>
 
             {/* Right Column: Predefined Attributes (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col gap-6">
-              <div className="gothic-panel rounded-2xl p-6 md:p-8 shadow-2xl relative flex-1 flex flex-col justify-between">
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <div className="gothic-panel rounded-2xl p-5 md:p-6 shadow-xl relative flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex justify-between items-center mb-6 pb-3 border-b border-gold-dim/30">
-                    <h2 className="text-xl font-display text-bone uppercase tracking-widest font-bold">Atributos del Destino</h2>
-                    <span className="text-xs uppercase tracking-widest text-amber-200 font-mono font-bold px-2.5 py-0.5 rounded bg-black/60 border border-gold-dim/40">Ficha Cerrada</span>
+                  <div className="flex justify-between items-center mb-3.5 pb-2 border-b border-gold-dim/20">
+                    <h2 className="text-base font-display text-bone uppercase tracking-widest font-bold">Atributos del Destino</h2>
+                    <span className="text-xs uppercase tracking-widest text-amber-200/90 font-mono font-semibold px-2 py-0.5 rounded bg-black/50 border border-gold-dim/30">Ficha Cerrada</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3.5 mb-6">
+                  <div className="grid grid-cols-2 gap-2.5 mb-3.5">
                     {(Object.entries(attributes) as [keyof CharacterAttributes, number][]).map(([attr, val]) => {
                       const meta = STAT_DESCRIPTIONS[attr];
                       const mod = getModifier(val);
                       return (
-                        <div key={attr} className="talisman-card p-3.5 rounded-xl text-center group relative border border-gold-dim/30 hover:border-gold/60 transition-all bg-black/50">
-                          <div className="flex items-center justify-center gap-1.5 text-xs text-amber-200 font-display font-bold uppercase tracking-wider mb-1">
-                            <span>{meta.icon}</span>
+                        <div key={attr} className="talisman-card p-2.5 rounded-xl text-center group relative border border-gold-dim/25 hover:border-gold-dim/50 bg-black/40 transition-colors">
+                          <div className="flex items-center justify-center gap-1 text-xs text-amber-200/90 font-display font-semibold uppercase tracking-wider mb-0.5">
+                            <span className="text-xs">{meta.icon}</span>
                             <span>{meta.name}</span>
                           </div>
-                          <div className="flex items-baseline justify-center gap-2 my-1">
-                            <span className="text-3xl font-display font-bold text-white group-hover:text-gold transition-colors">{val}</span>
-                            <span className="text-sm text-gold-bright font-mono font-bold">({mod})</span>
+                          <div className="flex items-center justify-center gap-1.5 my-0.5">
+                            <span className="text-lg font-display font-bold text-bone group-hover:text-gold transition-colors">{val}</span>
+                            <span className="text-xs px-1.5 py-0.2 rounded bg-black/60 border border-gold-dim/35 text-gold font-mono font-semibold">({mod})</span>
                           </div>
-                          <span className="text-xs text-stone-300 block mt-1.5 italic font-serif leading-snug line-clamp-2" title={meta.desc}>
+                          <span className="text-[11px] text-stone-300 block italic font-serif leading-tight line-clamp-2" title={meta.desc}>
                             {meta.desc}
                           </span>
                         </div>
@@ -702,14 +696,14 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                 </div>
 
                 <div>
-                  <p className="text-sm text-stone-300 italic leading-relaxed text-center mb-5 pb-4 border-b border-white/10">
+                  <p className="text-xs text-stone-300 italic leading-relaxed text-center mb-3.5 pb-2.5 border-b border-white/5">
                     "Tus habilidades han sido forjadas por tu pecado. No puedes cambiarlas ahora, solo sobrevivir con ellas."
                   </p>
 
                   <button 
                     onClick={handleStart}
                     disabled={isLoading}
-                    className="w-full py-4 px-6 rounded-xl text-base md:text-lg uppercase tracking-[0.2em] font-display font-bold transition-all duration-300 relative overflow-hidden group bg-gold text-void shadow-[0_0_20px_rgba(197,160,89,0.3)] hover:shadow-[0_0_35px_rgba(197,160,89,0.6)] hover:scale-[1.01] cursor-pointer"
+                    className="w-full py-2.5 md:py-3 px-6 rounded-xl text-xs md:text-sm uppercase tracking-[0.2em] font-display font-bold transition-all duration-300 relative overflow-hidden group bg-gold text-void shadow-[0_0_15px_rgba(197,160,89,0.3)] hover:shadow-[0_0_25px_rgba(197,160,89,0.5)] hover:scale-[1.01] cursor-pointer"
                   >
                     <span className="relative z-10">{isLoading ? 'Grabando destino...' : 'Firmar Contrato e Iniciar Vigilia'}</span>
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>
@@ -726,23 +720,23 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         {mode === 'custom' && (
           <>
             {/* Left Column: Custom Identity Form (7 cols) */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="gothic-panel rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-70"></div>
+            <div className="lg:col-span-7 space-y-4">
+              <div className="gothic-panel rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
                 
-                <div className="flex items-center justify-between mb-6 border-b border-gold-dim/30 pb-3">
-                  <span className="text-xs md:text-sm uppercase font-display tracking-[0.22em] text-gold font-bold">
+                <div className="flex items-center justify-between mb-4 border-b border-gold-dim/20 pb-2">
+                  <span className="text-xs uppercase font-display tracking-[0.2em] text-gold font-bold">
                     Forja de Identidad desde la Ceniza
                   </span>
-                  <span className="text-xs font-mono text-stone-200 font-bold px-2.5 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  <span className="text-xs font-mono text-stone-300 font-semibold px-2 py-0.5 rounded bg-black/50 border border-gold-dim/30">
                     Tabula Rasa
                   </span>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-3.5">
                   {/* Archetype / Role Input */}
                   <div>
-                    <label className="block text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold mb-2">
+                    <label className="block text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold mb-1.5">
                       Origen y Condena (Rol del Personaje)
                     </label>
                     <input 
@@ -750,18 +744,18 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                       value={customArchetype}
                       onChange={(e) => setCustomArchetype(e.target.value)}
                       maxLength={45}
-                      className="w-full bg-black/70 border border-gold-dim/40 rounded-xl p-3.5 text-base md:text-lg text-white font-serif focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner"
+                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 md:p-3 text-sm md:text-base text-bone font-serif focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner"
                       placeholder="Ej: Inquisidor Renegado, Boticario, Mendigo Ciego..."
                     />
                     {/* Quick suggestion pills */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                      <span className="text-xs uppercase tracking-widest text-gold-dim font-display font-bold mr-1 self-center">Ideas:</span>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <span className="text-xs uppercase tracking-widest text-gold-dim font-display font-semibold mr-1 self-center">Ideas:</span>
                       {ARCHETYPE_SUGGESTIONS.slice(0, 5).map((sug) => (
                         <button
                           key={sug}
                           type="button"
                           onClick={() => handleApplySuggestion(sug)}
-                          className="text-xs px-2.5 py-1 rounded border border-zinc-600 hover:border-gold bg-black/50 text-stone-200 hover:text-gold transition-colors font-serif font-medium cursor-pointer"
+                          className="text-xs px-2 py-0.5 rounded border border-zinc-700 hover:border-gold bg-black/40 text-stone-300 hover:text-gold transition-colors font-serif cursor-pointer"
                         >
                           + {sug}
                         </button>
@@ -769,76 +763,59 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                     </div>
                   </div>
 
-                  {/* GOTHIC SIGIL SELECTOR FOR CUSTOM CHARACTER */}
+                  {/* COMPACT GOTHIC SIGIL SELECTOR RIBBON */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold flex items-center gap-2">
-                        <span>Sigilo Heráldico del Desdichado</span>
-                        <span className="text-[10px] text-stone-400 font-mono font-normal">Emblema del vástago</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold flex items-center gap-1.5">
+                        <span>Sigilo Heráldico</span>
+                        <span className="text-xs text-gold font-normal">({GOTHIC_SIGILS.find(s => s.icon === customIcon)?.label || 'Emblema'})</span>
                       </label>
                       <button
                         type="button"
                         onClick={handleRandomSigil}
-                        className="text-xs text-gold hover:text-gold-bright uppercase tracking-wider font-display font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                         title="Elegir sigilo al azar"
                       >
                         <span>🎲</span>
-                        <span>Sigilo al Azar</span>
+                        <span>Al Azar</span>
                       </button>
                     </div>
 
-                    <div className="bg-black/60 border border-gold-dim/40 rounded-xl p-3.5 shadow-inner">
-                      <div className="flex items-center gap-3.5 mb-3 pb-2.5 border-b border-gold-dim/20">
-                        <div className="w-12 h-12 rounded-xl bg-gold/20 border-2 border-gold flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(197,160,89,0.35)] shrink-0">
-                          {customIcon}
-                        </div>
-                        <div>
-                          <span className="text-sm font-display font-bold text-bone block uppercase tracking-wider">
-                            {GOTHIC_SIGILS.find(s => s.icon === customIcon)?.label || "Sigilo Seleccionado"}
-                          </span>
-                          <span className="text-xs text-stone-300 font-serif italic">
-                            Este icono distinguirá a tu personaje en las crónicas y en el Grimorio de Almas.
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Sigil Palette */}
-                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-1.5 max-h-28 overflow-y-auto custom-scrollbar p-1">
-                        {GOTHIC_SIGILS.map((sig) => {
-                          const isSelected = customIcon === sig.icon;
-                          return (
-                            <button
-                              key={sig.icon}
-                              type="button"
-                              onClick={() => {
-                                audioSystem.playClick();
-                                setCustomIcon(sig.icon);
-                              }}
-                              title={sig.label}
-                              className={`h-9 rounded-lg flex items-center justify-center text-lg transition-all cursor-pointer ${
-                                isSelected 
-                                  ? 'bg-gold/30 border-2 border-gold scale-110 shadow-[0_0_12px_rgba(197,160,89,0.4)]' 
-                                  : 'bg-black/40 border border-zinc-700 hover:border-gold hover:bg-white/10 hover:scale-105'
-                              }`}
-                            >
-                              {sig.icon}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="grid grid-cols-11 sm:grid-cols-11 gap-1 p-1 bg-black/40 border border-gold-dim/25 rounded-xl">
+                      {GOTHIC_SIGILS.slice(0, 11).map((sig) => {
+                        const isSelected = customIcon === sig.icon;
+                        return (
+                          <button
+                            key={sig.icon}
+                            type="button"
+                            onClick={() => {
+                              audioSystem.playClick();
+                              setCustomIcon(sig.icon);
+                            }}
+                            title={sig.label}
+                            className={`h-7 rounded-lg flex items-center justify-center text-sm transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'bg-gold/25 border border-gold shadow-[0_0_8px_rgba(197,160,89,0.3)] scale-105' 
+                                : 'bg-black/30 border border-zinc-800 hover:border-gold-dim hover:bg-white/5'
+                            }`}
+                          >
+                            {sig.icon}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* Name Input with Randomizer */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold">
                         Nombre del Desdichado
                       </label>
                       <button
                         type="button"
                         onClick={handleRandomName}
-                        className="text-xs text-gold hover:text-gold-bright uppercase tracking-wider font-display font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                         title="Generar nombre aleatorio"
                       >
                         <span>🎲</span>
@@ -850,21 +827,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       maxLength={35}
-                      className="w-full bg-black/70 border border-gold-dim/40 rounded-xl p-3.5 text-base md:text-lg text-bone font-display font-bold focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner tracking-wide"
+                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 md:p-3 text-sm md:text-base text-bone font-display font-semibold focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner tracking-wide"
                       placeholder="Ej: Morvath Graves, Silas, Rowena..."
                     />
                   </div>
 
                   {/* Past Sin / Tragedy Textarea with Randomizer */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold">
                         La Sombra del Pasado (Pecado o Tragedia Inicial)
                       </label>
                       <button
                         type="button"
                         onClick={handleRandomSin}
-                        className="text-xs text-gold hover:text-gold-bright uppercase tracking-wider font-display font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                         title="Generar pecado trágico aleatorio"
                       >
                         <span>🎲</span>
@@ -874,21 +851,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                     <textarea 
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      rows={3}
+                      rows={2}
                       maxLength={240}
-                      className="w-full bg-black/70 border border-gold-dim/40 rounded-xl p-3.5 text-sm md:text-base text-stone-200 font-serif italic focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner leading-relaxed resize-none"
+                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 text-xs md:text-sm text-stone-200 font-serif italic focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner leading-relaxed resize-none"
                       placeholder="Escribe brevemente qué pecado, cobardía o desgracia te ha llevado a la vigilia..."
                     />
                   </div>
 
                   {/* Save to Grimoire Button */}
-                  <div className="pt-2 flex justify-end">
+                  <div className="pt-1 flex justify-end">
                     <button
                       type="button"
                       onClick={handleSaveToGrimoire}
-                      className="px-4 py-2.5 bg-black/70 border border-gold-dim/50 hover:border-gold hover:text-gold rounded-xl text-xs uppercase font-display font-bold tracking-widest text-stone-200 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                      className="px-3.5 py-2 bg-black/60 border border-gold-dim/30 hover:border-gold hover:text-gold rounded-xl text-xs uppercase font-display font-bold tracking-widest text-stone-300 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
-                      <span className="text-base">💾</span>
+                      <span className="text-sm">💾</span>
                       <span>Guardar en el Grimorio</span>
                     </button>
                   </div>
@@ -897,29 +874,29 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
             </div>
 
             {/* Right Column: Custom Attribute Allocation (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col gap-6">
-              <div className="gothic-panel rounded-2xl p-6 md:p-8 shadow-2xl relative flex-1 flex flex-col justify-between">
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <div className="gothic-panel rounded-2xl p-5 md:p-6 shadow-xl relative flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex justify-between items-center mb-6 pb-3 border-b border-gold-dim/30">
+                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-gold-dim/20">
                     <div>
-                      <h2 className="text-xl font-display text-bone uppercase tracking-widest font-bold">Reparto Rúnico</h2>
-                      <span className="text-xs text-stone-300 font-mono font-semibold">Base: 10 en cada atributo</span>
+                      <h2 className="text-base font-display text-bone uppercase tracking-widest font-bold">Reparto Rúnico</h2>
+                      <span className="text-xs text-stone-300 font-mono font-medium">Base: 10 en cada atributo</span>
                     </div>
 
                     <div className="text-right">
-                      <span className={`text-3xl font-display font-bold block ${pointsRemaining < 0 ? 'text-blood-bright animate-pulse' : pointsRemaining === 0 ? 'text-emerald-400' : 'text-gold'}`}>
+                      <span className={`text-2xl font-display font-bold block ${pointsRemaining < 0 ? 'text-blood-bright animate-pulse' : pointsRemaining === 0 ? 'text-emerald-400' : 'text-gold'}`}>
                         {pointsRemaining}
                       </span>
-                      <span className="text-xs uppercase tracking-widest text-stone-300 font-display font-bold">Puntos Restantes</span>
+                      <span className="text-xs uppercase tracking-widest text-stone-300 font-display font-medium">Puntos Restantes</span>
                     </div>
                   </div>
 
                   {/* Quick Allocation Helpers */}
-                  <div className="flex gap-2.5 mb-5">
+                  <div className="flex gap-2 mb-3">
                     <button
                       type="button"
                       onClick={handleRandomDistribution}
-                      className="flex-1 py-2 px-3 bg-black/60 border border-gold-dim/40 hover:border-gold text-xs uppercase font-display tracking-widest text-gold hover:text-gold-bright rounded-lg transition-colors flex items-center justify-center gap-2 font-bold cursor-pointer"
+                      className="flex-1 py-1.5 px-2 bg-black/50 border border-gold-dim/30 hover:border-gold text-xs uppercase font-display tracking-wider text-gold hover:text-gold-bright rounded-lg transition-colors flex items-center justify-center gap-1.5 font-bold cursor-pointer"
                     >
                       <span>🎲</span>
                       <span>Repartir al Azar</span>
@@ -927,7 +904,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                     <button
                       type="button"
                       onClick={handleResetAttributes}
-                      className="py-2 px-3.5 bg-black/60 border border-zinc-700 hover:border-zinc-500 text-xs uppercase font-display tracking-widest text-stone-300 hover:text-white rounded-lg transition-colors font-bold cursor-pointer"
+                      className="py-1.5 px-3 bg-black/50 border border-zinc-700 hover:border-zinc-500 text-xs uppercase font-display tracking-widest text-stone-300 hover:text-white rounded-lg transition-colors font-bold cursor-pointer"
                       title="Reiniciar todos a 10"
                     >
                       ↺
@@ -935,17 +912,17 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                   </div>
 
                   {/* Attribute Steppers */}
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-2 mb-3.5">
                     {(Object.entries(attributes) as [keyof CharacterAttributes, number][]).map(([attr, val]) => {
                       const meta = STAT_DESCRIPTIONS[attr];
                       const mod = getModifier(val);
                       return (
-                        <div key={attr} className="bg-black/50 border border-gold-dim/30 p-3 rounded-xl flex items-center justify-between group hover:border-gold-dim/70 transition-colors shadow-sm">
-                          <div className="flex items-center gap-3 pr-2">
-                            <span className="text-xl select-none shrink-0">{meta.icon}</span>
+                        <div key={attr} className="bg-black/40 border border-gold-dim/20 px-2.5 py-1 rounded-lg flex items-center justify-between group hover:border-gold-dim/40 transition-colors">
+                          <div className="flex items-center gap-2.5 pr-2">
+                            <span className="text-base select-none shrink-0">{meta.icon}</span>
                             <div>
-                              <span className="text-sm uppercase font-display font-bold text-bone block tracking-wide">{meta.name}</span>
-                              <span className="text-xs text-stone-300 italic block font-serif leading-snug mt-0.5 line-clamp-2">{meta.desc}</span>
+                              <span className="text-xs uppercase font-display font-bold text-bone block tracking-wide">{meta.name}</span>
+                              <span className="text-[11px] text-stone-300 italic block font-serif leading-tight line-clamp-1">{meta.desc}</span>
                             </div>
                           </div>
 
@@ -954,21 +931,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                               type="button"
                               onClick={() => handleAttributeChange(attr, -1)}
                               disabled={val <= MIN_ATTRIBUTE}
-                              className="w-8 h-8 flex items-center justify-center border border-zinc-600 bg-black/60 rounded-lg text-stone-200 hover:text-white hover:border-gold disabled:opacity-20 disabled:cursor-not-allowed font-bold text-base cursor-pointer"
+                              className="w-7 h-7 flex items-center justify-center border border-zinc-700 bg-black/50 rounded-lg text-stone-300 hover:text-white hover:border-gold disabled:opacity-20 disabled:cursor-not-allowed font-bold text-sm cursor-pointer"
                             >
                               -
                             </button>
                             
-                            <div className="w-12 text-center">
-                              <span className="text-xl font-display text-white font-bold block leading-none">{val}</span>
-                              <span className="text-xs text-gold-bright font-mono font-bold">{mod}</span>
+                            <div className="w-10 text-center">
+                              <span className="text-base font-display font-bold text-bone block leading-none">{val}</span>
+                              <span className="text-[11px] text-gold-dim font-mono">{mod}</span>
                             </div>
 
                             <button 
                               type="button"
                               onClick={() => handleAttributeChange(attr, 1)}
                               disabled={val >= MAX_ATTRIBUTE_CUSTOM || pointsRemaining <= 0}
-                              className="w-8 h-8 flex items-center justify-center border border-zinc-600 bg-black/60 rounded-lg text-stone-200 hover:text-gold hover:border-gold disabled:opacity-20 disabled:cursor-not-allowed font-bold text-base cursor-pointer"
+                              className="w-7 h-7 flex items-center justify-center border border-zinc-700 bg-black/50 rounded-lg text-stone-300 hover:text-gold hover:border-gold disabled:opacity-20 disabled:cursor-not-allowed font-bold text-sm cursor-pointer"
                             >
                               +
                             </button>
@@ -983,10 +960,10 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                   <button 
                     onClick={handleStart}
                     disabled={isLoading || !name.trim() || !isCustomValid}
-                    className={`w-full py-4 px-6 rounded-xl text-base md:text-lg uppercase tracking-[0.2em] font-display font-bold transition-all duration-300 relative overflow-hidden group
+                    className={`w-full py-3.5 px-6 rounded-xl text-sm md:text-base uppercase tracking-[0.2em] font-display font-bold transition-all duration-300 relative overflow-hidden group
                       ${isLoading || !name.trim() || !isCustomValid
                         ? 'bg-panel border border-zinc-800 text-stone-500 cursor-not-allowed opacity-50' 
-                        : 'bg-gold text-void shadow-[0_0_20px_rgba(197,160,89,0.3)] hover:shadow-[0_0_35px_rgba(197,160,89,0.6)] hover:scale-[1.01] cursor-pointer'}
+                        : 'bg-gold text-void shadow-[0_0_15px_rgba(197,160,89,0.3)] hover:shadow-[0_0_25px_rgba(197,160,89,0.5)] hover:scale-[1.01] cursor-pointer'}
                     `}
                   >
                     <span className="relative z-10">{isLoading ? 'Grabando destino...' : 'Firmar Contrato e Iniciar Vigilia'}</span>
@@ -1005,26 +982,26 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         {/* ============================================================== */}
         {mode === 'saved' && (
           <div className="lg:col-span-12">
-            <div className="gothic-panel rounded-2xl p-6 md:p-10 shadow-2xl relative">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-gold-dim/30 pb-4">
+            <div className="gothic-panel rounded-2xl p-5 md:p-8 shadow-xl relative">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-gold-dim/20 pb-3">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-display font-bold text-bone tracking-wide uppercase">Grimorio de Almas</h2>
-                  <p className="text-sm text-stone-300 italic mt-0.5">Vástagos personalizados preservados para la vigilia</p>
+                  <h2 className="text-xl md:text-2xl font-display font-bold text-bone tracking-wide uppercase">Grimorio de Almas</h2>
+                  <p className="text-xs text-stone-300 italic mt-0.5">Vástagos personalizados preservados para la vigilia</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleExportGrimoire}
                     disabled={savedCharacters.length === 0}
-                    className="px-3.5 py-2 bg-black/60 border border-gold-dim/40 hover:border-gold text-xs uppercase font-display font-bold tracking-widest text-gold hover:text-gold-bright rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                    className="px-3 py-1.5 bg-black/50 border border-gold-dim/30 hover:border-gold text-xs uppercase font-display font-semibold tracking-wider text-gold hover:text-gold-bright rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
                   >
                     Exportar JSON
                   </button>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3.5 py-2 bg-black/60 border border-gold-dim/40 hover:border-gold text-xs uppercase font-display font-bold tracking-widest text-gold hover:text-gold-bright rounded-lg transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-black/50 border border-gold-dim/30 hover:border-gold text-xs uppercase font-display font-semibold tracking-wider text-gold hover:text-gold-bright rounded-lg transition-colors cursor-pointer"
                   >
                     Importar JSON
                   </button>
@@ -1039,93 +1016,93 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
               </div>
 
               {savedCharacters.length === 0 ? (
-                <div className="py-16 text-center">
-                  <div className="text-5xl mb-4 text-zinc-600">📜</div>
-                  <h3 className="text-2xl font-display text-bone mb-2">El Grimorio está vacío</h3>
-                  <p className="text-base font-serif italic text-stone-300 max-w-md mx-auto mb-6">
+                <div className="py-12 text-center">
+                  <div className="text-4xl mb-3 text-zinc-600">📜</div>
+                  <h3 className="text-lg font-display text-bone mb-1.5">El Grimorio está vacío</h3>
+                  <p className="text-xs font-serif italic text-stone-300 max-w-md mx-auto mb-4">
                     Aún no has sellado a ningún vástago personalizado. Ve a la pestaña de Tabula Rasa para forjar un personaje con su sigilo y guardarlo aquí.
                   </p>
                   <button
                     onClick={() => handleModeChange('custom')}
-                    className="px-6 py-3 bg-gold/20 border-2 border-gold text-gold font-display text-sm uppercase tracking-widest font-bold rounded-xl hover:bg-gold hover:text-void transition-colors cursor-pointer"
+                    className="px-5 py-2 bg-gold/15 border border-gold text-gold font-display text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-gold hover:text-void transition-colors cursor-pointer"
                   >
                     Ir a Tabula Rasa
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1.5">
                   {savedCharacters.map((saved) => (
                     <div 
                       key={saved.id}
-                      className="bg-black/60 border border-gold-dim/40 hover:border-gold/70 p-5 md:p-6 rounded-xl transition-all shadow-md flex flex-col justify-between gap-4 group"
+                      className="bg-black/50 border border-gold-dim/30 hover:border-gold/60 p-4 rounded-xl transition-all shadow-md flex flex-col justify-between gap-3 group"
                     >
                       <div>
-                        <div className="flex justify-between items-start mb-2.5">
-                          <div className="flex items-center gap-3">
-                            <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(197,160,89,0.4)] shrink-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-2xl filter drop-shadow-[0_0_6px_rgba(197,160,89,0.3)] shrink-0">
                               {saved.icon || '⚡'}
                             </span>
                             <div>
-                              <h3 className="text-xl md:text-2xl font-display font-bold text-bone group-hover:text-gold transition-colors">
+                              <h3 className="text-lg font-display font-bold text-bone group-hover:text-gold transition-colors">
                                 {saved.name}
                               </h3>
-                              <span className="text-xs md:text-sm uppercase font-serif italic text-amber-200/90 font-bold block">
+                              <span className="text-xs uppercase font-serif italic text-amber-200/90 font-semibold block">
                                 {saved.archetype}
                               </span>
                             </div>
                           </div>
-                          <span className="text-xs text-stone-400 font-mono tracking-widest uppercase">
+                          <span className="text-[11px] text-stone-400 font-mono tracking-wider uppercase">
                             {new Date(saved.createdAt).toLocaleDateString()}
                           </span>
                         </div>
 
-                        <p className="text-sm italic font-serif text-stone-200 bg-void/50 p-3 rounded-lg border border-white/10 mb-3.5 line-clamp-3 leading-relaxed">
+                        <p className="text-xs italic font-serif text-stone-200 bg-void/40 p-2.5 rounded-lg border border-white/5 mb-2.5 line-clamp-2 leading-relaxed">
                           "{saved.bio}"
                         </p>
 
                         {/* Mini Stats Chips with High Legibility */}
-                        <div className="grid grid-cols-6 gap-1.5 text-center font-mono">
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">FUE</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.fuerza}</span>
+                        <div className="grid grid-cols-6 gap-1 text-center font-mono">
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">FUE</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.fuerza}</span>
                           </div>
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">DES</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.destreza}</span>
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">DES</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.destreza}</span>
                           </div>
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">CON</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.constitucion}</span>
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">CON</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.constitucion}</span>
                           </div>
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">INT</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.inteligencia}</span>
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">INT</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.inteligencia}</span>
                           </div>
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">SAB</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.sabiduria}</span>
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">SAB</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.sabiduria}</span>
                           </div>
-                          <div className="bg-void/70 p-1.5 rounded border border-white/10">
-                            <span className="text-gold-dim block text-[10px] font-bold">CAR</span>
-                            <span className="font-bold text-white text-xs md:text-sm">{saved.attributes.carisma}</span>
+                          <div className="bg-void/60 p-1 rounded border border-white/5">
+                            <span className="text-gold-dim block text-[9px] font-bold">CAR</span>
+                            <span className="font-bold text-white text-xs">{saved.attributes.carisma}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Card Action Buttons */}
-                      <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
                         <button
                           type="button"
                           onClick={() => handleStartSavedChar(saved)}
                           disabled={isLoading}
-                          className="flex-1 py-2.5 bg-gold/20 hover:bg-gold hover:text-void border border-gold text-gold text-xs uppercase font-display tracking-widest font-bold rounded-lg transition-colors shadow-sm cursor-pointer"
+                          className="flex-1 py-1.5 bg-gold/15 hover:bg-gold hover:text-void border border-gold/60 text-gold text-xs uppercase font-display tracking-widest font-bold rounded-lg transition-colors shadow-sm cursor-pointer"
                         >
                           ✦ Jugar
                         </button>
                         <button
                           type="button"
                           onClick={() => handleLoadSavedChar(saved)}
-                          className="px-3.5 py-2.5 bg-black/60 hover:bg-white/10 border border-zinc-700 text-stone-200 hover:text-white text-xs font-display uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-black/50 hover:bg-white/5 border border-zinc-700 text-stone-200 hover:text-white text-xs font-display uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
                           title="Cargar y editar en Tabula Rasa"
                         >
                           Editar
@@ -1133,7 +1110,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                         <button
                           type="button"
                           onClick={() => handleDeleteSavedChar(saved.id, saved.name)}
-                          className="px-3 py-2.5 bg-black/60 hover:bg-blood/20 border border-zinc-800 hover:border-blood text-stone-400 hover:text-blood-bright text-xs rounded-lg transition-colors cursor-pointer"
+                          className="px-2.5 py-1.5 bg-black/50 hover:bg-blood/20 border border-zinc-800 hover:border-blood text-stone-400 hover:text-blood-bright text-xs rounded-lg transition-colors cursor-pointer"
                           title="Eliminar del Grimorio"
                         >
                           ✕

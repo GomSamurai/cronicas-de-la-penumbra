@@ -15,16 +15,6 @@ type ModalType = 'none' | 'manual' | 'about' | 'graveyard' | 'settings';
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [hasLocalSave, setHasLocalSave] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [useVideoBg, setUseVideoBg] = useState(() => {
-    return localStorage.getItem('penumbra_video_bg') !== 'false';
-  });
-
-  const toggleVideoBg = () => {
-    const nextVal = !useVideoBg;
-    setUseVideoBg(nextVal);
-    localStorage.setItem('penumbra_video_bg', String(nextVal));
-  };
   const [graveyardData, setGraveyardData] = useState<GraveyardSoul[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,19 +70,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-void"></div>
         
-        {/* Background Video Loop (FFmpeg Procedural Atmospheric Render) */}
-        {useVideoBg && (
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            onLoadedData={() => setVideoLoaded(true)}
-            className={`absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none transition-opacity duration-1000 ${videoLoaded ? 'opacity-40' : 'opacity-0'}`}
-            src="/bg_penumbra.mp4"
-          />
-        )}
-
         {/* Base Noise Texture */}
         <div className="absolute inset-0 bg-texture opacity-30"></div>
         
@@ -163,15 +140,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
 
           <div className="flex flex-wrap gap-3 justify-center items-center mt-4">
-             <button 
-               type="button"
-               onClick={(e) => { e.stopPropagation(); toggleVideoBg(); }}
-               className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border transition-colors font-mono ${useVideoBg ? 'border-gold-dim text-gold bg-gold/10' : 'border-zinc-800 text-zinc-600 bg-black/40'}`}
-               title="Alternar fondo de vídeo atmosférico"
-             >
-               🎬 Fondo: {useVideoBg ? 'ON' : 'OFF'}
-             </button>
-             <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Manual</button>
              <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Proyecto</button>
