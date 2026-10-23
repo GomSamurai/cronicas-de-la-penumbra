@@ -15,6 +15,16 @@ type ModalType = 'none' | 'manual' | 'about' | 'graveyard' | 'settings';
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [hasLocalSave, setHasLocalSave] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [useVideoBg, setUseVideoBg] = useState(() => {
+    return localStorage.getItem('penumbra_video_bg') !== 'false';
+  });
+
+  const toggleVideoBg = () => {
+    const nextVal = !useVideoBg;
+    setUseVideoBg(nextVal);
+    localStorage.setItem('penumbra_video_bg', String(nextVal));
+  };
   const [graveyardData, setGraveyardData] = useState<GraveyardSoul[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +65,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden text-parchment" onClick={initAudio}>
       
+      {/* Gothic Filigree Corner Brackets */}
+      <div className="pointer-events-none absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-gold-dim/40 rounded-tl-lg z-20"></div>
+      <div className="pointer-events-none absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-gold-dim/40 rounded-tr-lg z-20"></div>
+      <div className="pointer-events-none absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-gold-dim/40 rounded-bl-lg z-20"></div>
+      <div className="pointer-events-none absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-gold-dim/40 rounded-br-lg z-20"></div>
+
       {/* Audio Controls - Top Right */}
       <div className="absolute top-6 right-6 z-50">
         <AudioController variant="header" />
@@ -64,6 +80,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-void"></div>
         
+        {/* Background Video Loop (FFmpeg Procedural Atmospheric Render) */}
+        {useVideoBg && (
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            onLoadedData={() => setVideoLoaded(true)}
+            className={`absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none transition-opacity duration-1000 ${videoLoaded ? 'opacity-40' : 'opacity-0'}`}
+            src="/bg_penumbra.mp4"
+          />
+        )}
+
         {/* Base Noise Texture */}
         <div className="absolute inset-0 bg-texture opacity-30"></div>
         
@@ -97,12 +126,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
       <div className="relative z-10 flex flex-col items-center text-center space-y-12 max-w-2xl px-6 animate-fade-in">
         
         {/* Title */}
-        <div className="space-y-4">
-          <div className="text-gold text-xs tracking-[0.5em] uppercase font-display">Novela Interactiva Procedural</div>
-          <h1 className="text-6xl md:text-8xl font-display font-bold text-bone tracking-tighter chromatic-aberration">
+        <div className="space-y-4 relative">
+          <div className="absolute -inset-8 bg-radial from-gold-dim/15 to-transparent blur-2xl pointer-events-none animate-pulse-slow"></div>
+          <div className="text-gold text-xs tracking-[0.5em] uppercase font-display font-bold drop-shadow-sm">Novela Interactiva Procedural</div>
+          <h1 className="text-6xl md:text-8xl font-display font-bold text-bone tracking-tighter chromatic-aberration drop-shadow-2xl">
             Crónicas de<br/>la Penumbra
           </h1>
-          <div className="h-px w-32 bg-gold mx-auto"></div>
+          <div className="h-px w-36 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto"></div>
         </div>
 
         {/* Menu Buttons */}
@@ -132,7 +162,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
 
-          <div className="flex gap-4 justify-center mt-4">
+          <div className="flex flex-wrap gap-3 justify-center items-center mt-4">
+             <button 
+               type="button"
+               onClick={(e) => { e.stopPropagation(); toggleVideoBg(); }}
+               className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border transition-colors font-mono ${useVideoBg ? 'border-gold-dim text-gold bg-gold/10' : 'border-zinc-800 text-zinc-600 bg-black/40'}`}
+               title="Alternar fondo de vídeo atmosférico"
+             >
+               🎬 Fondo: {useVideoBg ? 'ON' : 'OFF'}
+             </button>
+             <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Manual</button>
              <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Proyecto</button>
