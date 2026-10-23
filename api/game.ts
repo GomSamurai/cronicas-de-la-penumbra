@@ -5,12 +5,22 @@ import type { Character, GameState, TokenUsage } from "../types";
 
 export const maxDuration = 30; // Evita el timeout de Vercel
 
-function getAi() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not set in environment");
+function getAi(customApiKey?: string) {
+  const apiKey = (customApiKey && customApiKey.trim().length > 0) ? customApiKey.trim() : process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("No hay ninguna clave de API configurada en el servidor ni en tu navegador. Introduce tu clave gratuita de Google Gemini en el menú de Ajustes.");
+  }
   return new GoogleGenAI({ apiKey });
 }
-const MODEL_NAME = 'gemini-3.8-flash';
+
+function resolveModel(modelName?: string) {
+  const ALLOWED_MODELS = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-2.5-pro'];
+  if (modelName && ALLOWED_MODELS.includes(modelName)) {
+    return modelName;
+  }
+  return 'gemini-2.5-flash';
+}
+
 
 // Defines the strict JSON structure we expect from the AI Game Engine
 const responseSchema: Schema = {
@@ -260,10 +270,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { type, payload } = req.body;
+  const { type, payload, customApiKey, model } = req.body || {};
+  const activeModel = resolveModel(model);
 
   try {
-    const ai = getAi();
+    const ai = getAi(customApiKey);
+
+    if (type === 'testConnection') {
+      const response = await ai.models.generateContent({
+        model: activeModel,
+        contents: "Responde únicamente con: CONEXION_ESTABLECIDA",
+      });
+      return res.status(200).json({
+        success: true,
+        model: activeModel,
+        sample: response.text?.trim() || "CONEXION_ESTABLECIDA"
+      });
+    }
+
     if (type === 'startAdventure') {
       const character = payload as Character;
       const prompt = `
@@ -288,7 +312,7 @@ Genera el JSON siguiendo el esquema estricto.
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_NAME,
+        model: activeModel,
         contents: prompt,
         config: {
           systemInstruction: MASTER_SYSTEM_INSTRUCTION,
@@ -399,7 +423,7 @@ Genera el JSON de respuesta.
       `;
 
       const response = await ai.models.generateContent({
-        model: MODEL_NAME,
+        model: activeModel,
         contents: userPrompt,
         config: {
           systemInstruction: MASTER_SYSTEM_INSTRUCTION,
@@ -423,6 +447,12 @@ Genera el JSON de respuesta.
     return res.status(400).json({ error: 'Unknown action type' });
   } catch (error: any) {
     console.error("Error in API route:", error);
-    return res.status(500).json({ error: error.message || "Internal Server Error" });
+    let msg = error?.message || "Internal Server Error";
+    if (msg.includes("API_KEY_INVALID") || msg.includes("API key not valid")) {
+      msg = "La clave de API de Gemini no es válida o ha caducado. Comprueba tus Ajustes de la Vigilia.";
+    } else if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded")) {
+      msg = "Cuota de la clave de Gemini agotada. Si usas la clave predeterminada, introduce tu propia clave gratuita en Ajustes para continuar sin límites.";
+    }
+    return res.status(500).json({ error: msg });
   }
 }

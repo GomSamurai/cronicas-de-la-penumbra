@@ -1,15 +1,66 @@
 import { Character, GameState, ServiceResponse } from "../types";
 
+export const getCustomApiKey = (): string => {
+  try {
+    return (localStorage.getItem('penumbra_custom_api_key') || '').trim();
+  } catch {
+    return '';
+  }
+};
+
+export const getSelectedModel = (): string => {
+  try {
+    return localStorage.getItem('penumbra_selected_model') || 'gemini-2.5-flash';
+  } catch {
+    return 'gemini-2.5-flash';
+  }
+};
+
+export const testConnection = async (
+  customApiKey?: string, 
+  model?: string
+): Promise<{ success: boolean; message: string; model?: string }> => {
+  try {
+    const key = customApiKey !== undefined ? customApiKey.trim() : getCustomApiKey();
+    const mdl = model || getSelectedModel();
+
+    const response = await fetch('/api/game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        type: 'testConnection', 
+        customApiKey: key, 
+        model: mdl 
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, message: data.error || 'Fallo de conexión con el éter' };
+    }
+    return { success: true, message: 'Conexión con el éter verificada con éxito.', model: data.model };
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Error de red al intentar contactar con el éter.' };
+  }
+};
+
 export const startAdventure = async (character: Character): Promise<ServiceResponse> => {
   const maxRetries = 3;
   let attempt = 0;
+  const customApiKey = getCustomApiKey();
+  const model = getSelectedModel();
 
   while (attempt < maxRetries) {
     try {
       const response = await fetch('/api/game', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'startAdventure', payload: character }),
+        body: JSON.stringify({ 
+          type: 'startAdventure', 
+          payload: character,
+          customApiKey: customApiKey || undefined,
+          model
+        }),
       });
 
       if (!response.ok) {
@@ -42,7 +93,7 @@ export const startAdventure = async (character: Character): Promise<ServiceRespo
       throw new Error(error.message?.replace('RETRY_503:', '') || String(error));
     }
   }
-  throw new Error("Timeout after multiple retries");
+  throw new Error("Tiempo de espera agotado tras varios reintentos con el éter");
 };
 
 export const nextTurn = async (
@@ -51,13 +102,20 @@ export const nextTurn = async (
 ): Promise<ServiceResponse> => {
   const maxRetries = 3;
   let attempt = 0;
+  const customApiKey = getCustomApiKey();
+  const model = getSelectedModel();
 
   while (attempt < maxRetries) {
     try {
       const response = await fetch('/api/game', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'nextTurn', payload: { action, currentState } }),
+        body: JSON.stringify({ 
+          type: 'nextTurn', 
+          payload: { action, currentState },
+          customApiKey: customApiKey || undefined,
+          model
+        }),
       });
 
       if (!response.ok) {
@@ -90,5 +148,5 @@ export const nextTurn = async (
       throw new Error(error.message?.replace('RETRY_503:', '') || String(error));
     }
   }
-  throw new Error("Timeout after multiple retries");
+  throw new Error("Tiempo de espera agotado tras varios reintentos con el éter");
 };

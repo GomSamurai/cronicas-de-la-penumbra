@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { audioSystem } from '../services/audioService';
 import AudioController from './AudioController';
+import SettingsModal from './SettingsModal';
 
 interface HomeScreenProps {
   onNewGame: () => void;
@@ -8,7 +9,7 @@ interface HomeScreenProps {
   onResumeLocal?: () => void;
 }
 
-type ModalType = 'none' | 'manual' | 'about' | 'graveyard';
+type ModalType = 'none' | 'manual' | 'about' | 'graveyard' | 'settings';
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
@@ -134,6 +135,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Manual</button>
              <span className="text-zinc-800">•</span>
              <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Proyecto</button>
+             <span className="text-zinc-800">•</span>
+             <button onClick={(e) => { e.stopPropagation(); setActiveModal('settings'); }} className="text-xs uppercase tracking-widest text-gold-dim hover:text-gold transition-colors flex items-center gap-1 font-bold">
+               <span>⚙️</span>
+               <span>Ajustes</span>
+             </button>
              {graveyardData.length > 0 && (
                 <>
                   <span className="text-zinc-800">•</span>
@@ -285,6 +291,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={activeModal === 'settings'} 
+        onClose={() => setActiveModal('none')} 
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { audioSystem } from '../services/audioService';
 import TypewriterBlock from './TypewriterBlock';
 import { exportStoryToPDF } from '../services/exportService';
 import AudioController from './AudioController';
+import SettingsModal, { getVisualEffectsSetting } from './SettingsModal';
 
 interface GameScreenProps {
   gameState: GameState;
@@ -31,6 +32,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const [showOptions, setShowOptions] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('narrative');
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [visualEffectsEnabled, setVisualEffectsEnabled] = useState(getVisualEffectsSetting());
   const [showDiceLog, setShowDiceLog] = useState(false);
   const [whisperIdx, setWhisperIdx] = useState(0);
   
@@ -61,10 +64,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   // --- VISCERAL INSTABILITY STATE ---
   const [aberrationAmount, setAberrationAmount] = useState('0px');
   const [isTextGlitching, setIsTextGlitching] = useState(false);
+  const [isEyelidBlurring, setIsEyelidBlurring] = useState(false);
   
   const prevHpRef = useRef(gameState.hp);
   const glitchTimeoutRef = useRef<number | null>(null);
   const aberrationTimeoutRef = useRef<number | null>(null);
+  const eyelidTimeoutRef = useRef<number | null>(null);
 
   // Refs for scrolling
   const lastTurnRef = useRef<HTMLDivElement>(null);
@@ -84,15 +89,27 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   useEffect(() => {
     audioSystem.setMode('game');
     audioSystem.updateTension(gameState.tensionLevel || 'calma', gameState.hp, gameState.maxHp, gameState.sanity);
+    if (gameState.currentLocation) {
+      audioSystem.updateLocationAcoustics(gameState.currentLocation.name, gameState.currentLocation.lighting);
+    }
     
     // Cleanup audio and timers when leaving game
     return () => {
        audioSystem.updateTension('calma', 100, 100, 100);
        audioSystem.updateHeartbeat(100, 100); 
+       audioSystem.stopTinnitus();
        if (glitchTimeoutRef.current) window.clearTimeout(glitchTimeoutRef.current);
        if (aberrationTimeoutRef.current) window.clearTimeout(aberrationTimeoutRef.current);
+       if (eyelidTimeoutRef.current) window.clearTimeout(eyelidTimeoutRef.current);
     };
   }, []);
+
+  // Update location acoustics dynamically
+  useEffect(() => {
+    if (gameState.currentLocation) {
+      audioSystem.updateLocationAcoustics(gameState.currentLocation.name, gameState.currentLocation.lighting);
+    }
+  }, [gameState.currentLocation?.name, gameState.currentLocation?.lighting]);
 
   // --- VISCERAL FEEDBACK & ADAPTIVE AUDIO LOGIC ---
   useEffect(() => {
@@ -213,8 +230,39 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   }, [gameState.hp, gameState.maxHp, gameState.sanity]);
 
 
-  // Determine Low Health Visual Pulse (Vignette)
+  // Determine Low Health Visual Pulse (Vignette) & Near Death
+  const isNearDeath = gameState.hp < (gameState.maxHp * 0.25);
   const isAgony = gameState.hp < (gameState.maxHp * 0.4);
+
+  // Eyelid defocus transient schedule on near death
+  useEffect(() => {
+    if (!visualEffectsEnabled) {
+      setIsEyelidBlurring(false);
+      return;
+    }
+
+    if (isNearDeath) {
+      const scheduleEyelidBlur = () => {
+        const delay = 14000 + Math.random() * 10000;
+        eyelidTimeoutRef.current = window.setTimeout(() => {
+          setIsEyelidBlurring(true);
+          setTimeout(() => {
+            setIsEyelidBlurring(false);
+            scheduleEyelidBlur();
+          }, 2000);
+        }, delay);
+      };
+
+      scheduleEyelidBlur();
+    } else {
+      if (eyelidTimeoutRef.current) window.clearTimeout(eyelidTimeoutRef.current);
+      setIsEyelidBlurring(false);
+    }
+
+    return () => {
+      if (eyelidTimeoutRef.current) window.clearTimeout(eyelidTimeoutRef.current);
+    };
+  }, [isNearDeath, visualEffectsEnabled]);
 
   // ------------------------------
 
@@ -610,7 +658,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const hasAfflictions = (gameState.traumas && gameState.traumas.length > 0) || (gameState.phobias && gameState.phobias.length > 0);
 
   return (
-    <div className={`fixed inset-0 bg-void text-parchment overflow-hidden font-serif selection:bg-blood selection:text-white transition-all duration-1000`}>
+    <div className={`fixed inset-0 bg-void text-parchment overflow-hidden font-serif selection:bg-blood selection:text-white transition-all duration-1000 ${visualEffectsEnabled && isNearDeath ? 'agony-screen' : ''}`}>
       
       {/* --- ATMOSPHERIC LAYERS --- */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -625,6 +673,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
           {gameState.tensionLevel === 'peligro' && <div className="absolute inset-0 vignette-peligro z-[2] transition-opacity duration-700"></div>}
           {gameState.tensionLevel === 'sospecha' && <div className="absolute inset-0 vignette-sospecha z-[2] transition-opacity duration-700"></div>}
           {gameState.tensionLevel === 'tension' && <div className="absolute inset-0 vignette-tension z-[2] transition-opacity duration-700"></div>}
+
+          {/* Madness Living Shadows Vignette (< 40% sanity) */}
+          {visualEffectsEnabled && gameState.sanity < 40 && (
+            <div className="absolute inset-0 vignette-madness z-[3] transition-opacity duration-1000 pointer-events-none"></div>
+          )}
+
+          {/* Agony Arterial Pulse Vignette (< 25% HP) */}
+          {visualEffectsEnabled && isNearDeath && (
+            <div className="absolute inset-0 arterial-pulse z-[4] transition-opacity duration-700 pointer-events-none"></div>
+          )}
 
           {/* Agony Vignette (Low HP) */}
           <div className={`absolute inset-0 bg-gradient-radial from-transparent to-blood/40 mix-blend-overlay transition-opacity duration-1000 ${isAgony ? 'opacity-100 animate-heartbeat-visual' : 'opacity-0'}`}></div>
@@ -675,6 +733,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
         
         <div className="flex items-center gap-3 md:gap-5">
            <AudioController variant="header" />
+           
+           {/* Settings Button */}
+           <button 
+             onClick={() => setShowSettingsModal(true)} 
+             className="flex items-center gap-1 text-parchment hover:text-gold transition-colors uppercase text-xs tracking-[0.2em] font-bold" 
+             title="Ajustes de la Vigilia"
+           >
+              <span className="text-sm">⚙️</span>
+              <span className="hidden xl:inline">Ajustes</span>
+           </button>
+
            <div className="h-4 w-px bg-gold-dim/30"></div>
 
            {/* PDF Export - ENABLED EVEN IF DEAD */}
@@ -908,10 +977,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                 {/* 
                    DYNAMIC CONTAINER FOR TEXT EFFECTS 
                    Applying style variable for dynamic aberration amount.
-                   Applying conditional class for intermittent glitch.
+                   Applying conditional class for intermittent glitch, spectral text, and eyelid faint.
                 */}
                 <div 
-                   className={`transition-all duration-300 dynamic-aberration ${isTextGlitching ? 'text-instability' : ''}`}
+                   className={`transition-all duration-300 dynamic-aberration ${isTextGlitching ? 'text-instability' : ''} ${
+                     visualEffectsEnabled && gameState.sanity < 25 
+                       ? 'madness-spectral-extreme' 
+                       : visualEffectsEnabled && gameState.sanity < 40 
+                       ? 'madness-spectral-text' 
+                       : ''
+                   } ${visualEffectsEnabled && isEyelidBlurring ? 'eyelid-faint' : ''} ${
+                     visualEffectsEnabled && isTextGlitching && gameState.sanity < 35 ? 'madness-text-jitter' : ''
+                   }`}
                    style={{ '--aberration-amount': aberrationAmount } as React.CSSProperties}
                 >
                   {gameState.narrativeHistory.map((turn, index) => {
@@ -1433,6 +1510,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
             </div>
          </div>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={showSettingsModal} 
+        onClose={() => {
+          setShowSettingsModal(false);
+          setVisualEffectsEnabled(getVisualEffectsSetting());
+        }} 
+      />
     </div>
   );
 };

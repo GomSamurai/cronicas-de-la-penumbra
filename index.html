@@ -247,6 +247,76 @@
       .chromatic-aberration {
          animation: chromatic-pulse 4s infinite linear;
       }
+
+      /* --- NUEVOS EFECTOS VISCERALES DINÁMICOS --- */
+
+      /* 1. Viñeta de Locura / Delirio (Living Shadows) */
+      .vignette-madness {
+        background: radial-gradient(circle at center, transparent 30%, rgba(20, 5, 25, 0.45) 65%, rgba(5, 0, 10, 0.85) 100%);
+        pointer-events: none;
+        animation: madnessBreath 5s ease-in-out infinite alternate;
+      }
+      @keyframes madnessBreath {
+        0% { transform: scale(1); opacity: 0.75; }
+        100% { transform: scale(1.035); opacity: 1; }
+      }
+
+      /* 2. Pantalla en Agonía (Desaturación y Pérdida de Color) */
+      .agony-screen {
+        filter: grayscale(42%) contrast(112%) sepia(18%);
+        transition: filter 1.2s ease-in-out;
+      }
+
+      /* 3. Pulso Arterial Carmesí (Sangrado / Near Death) */
+      .arterial-pulse {
+        box-shadow: inset 0 0 60px rgba(185, 28, 28, 0.55), inset 0 0 120px rgba(88, 10, 10, 0.45);
+        animation: arterialBeat 1.3s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+        pointer-events: none;
+      }
+      @keyframes arterialBeat {
+        0%, 100% { opacity: 0.45; }
+        25% { opacity: 0.95; }
+        45% { opacity: 0.6; }
+        65% { opacity: 0.88; }
+      }
+
+      /* 4. Desvanecimiento de Párpados / Faint de Visión */
+      .eyelid-faint {
+        animation: eyelidBlurWave 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes eyelidBlurWave {
+        0% { filter: blur(0px); opacity: 1; }
+        35% { filter: blur(1.8px); opacity: 0.8; transform: scale(0.998); }
+        65% { filter: blur(0.7px); opacity: 0.92; }
+        100% { filter: blur(0px); opacity: 1; transform: scale(1); }
+      }
+
+      /* 5. Temblores Tipográficos de Locura / Delirio */
+      .madness-text-jitter {
+        animation: jitterText 0.35s infinite alternate;
+        letter-spacing: 0.015em;
+      }
+      @keyframes jitterText {
+        0% { transform: translate(0, 0); }
+        25% { transform: translate(-0.35px, 0.35px); }
+        50% { transform: translate(0.35px, -0.2px); }
+        75% { transform: translate(-0.25px, -0.35px); }
+        100% { transform: translate(0.3px, 0.25px); }
+      }
+
+      /* 6. Texto Espectral con Halo Bicromático */
+      .madness-spectral-text {
+        text-shadow: 1.5px 0 rgba(220, 38, 38, 0.55), -1.5px 0 rgba(6, 182, 212, 0.55);
+        transition: text-shadow 0.4s ease;
+      }
+      .madness-spectral-extreme {
+        text-shadow: 2.8px 0 rgba(220, 38, 38, 0.75), -2.8px 0 rgba(6, 182, 212, 0.75), 0 2px rgba(168, 85, 247, 0.4);
+        animation: spectralPulse 2.5s ease-in-out infinite alternate;
+      }
+      @keyframes spectralPulse {
+        0% { text-shadow: 2px 0 rgba(220, 38, 38, 0.65), -2px 0 rgba(6, 182, 212, 0.65); }
+        100% { text-shadow: 3.5px 0.5px rgba(220, 38, 38, 0.85), -3.5px -0.5px rgba(6, 182, 212, 0.85); }
+      }
     </style>
   <script type="importmap">
 {

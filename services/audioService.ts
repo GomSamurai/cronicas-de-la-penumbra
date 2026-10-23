@@ -62,6 +62,11 @@ class AudioService {
   private subbassInterval: number | null = null;
   private combatDrumsInterval: number | null = null;
 
+  // Tinnitus System (Low Sanity Mental Strain)
+  private tinnitusOsc: OscillatorNode | null = null;
+  private tinnitusGain: GainNode | null = null;
+  private isTinnitusActive: boolean = false;
+
   // Musical Scales (Base frequencies in Hz for 2nd octave)
   private scales = {
     minor: [55, 61.74, 65.41, 73.42, 82.41, 87.31, 98.00], // A natural minor
@@ -259,10 +264,10 @@ class AudioService {
 
     const now = this.ctx.currentTime;
 
-    // Muffled auditory shock in agony/near death
+    // Muffled auditory shock in agony/near death (blood loss shock)
     const isAgony = tension === 'agonico' || (hp !== undefined && maxHp !== undefined && hp < maxHp * 0.25);
     if (this.masterFilter) {
-      const targetCutoff = isAgony ? 950 : 20000;
+      const targetCutoff = isAgony ? 650 : 20000;
       this.masterFilter.frequency.setTargetAtTime(targetCutoff, now, 1.2);
     }
 
@@ -271,6 +276,15 @@ class AudioService {
       this.startCombatDrums();
     } else {
       this.stopCombatDrums();
+    }
+
+    // Tinnitus ring on low sanity (< 30)
+    if (sanity !== undefined) {
+      if (sanity < 30 && !this.isTinnitusActive) {
+        this.startTinnitus();
+      } else if (sanity >= 30 && this.isTinnitusActive) {
+        this.stopTinnitus();
+      }
     }
 
     // Occasional sanity whispers when mentally broken
@@ -311,6 +325,86 @@ class AudioService {
     // Update heartbeat
     if (hp !== undefined && maxHp !== undefined) {
       this.updateHeartbeat(hp, maxHp);
+    }
+  }
+
+  // --- PROCEDURAL TINNITUS (MENTAL STRAIN RING) ---
+  public startTinnitus() {
+    if (!this.ctx || !this.masterGain || this.isTinnitusActive) return;
+    try {
+      this.tinnitusOsc = this.ctx.createOscillator();
+      this.tinnitusGain = this.ctx.createGain();
+      
+      this.tinnitusOsc.type = 'sine';
+      this.tinnitusOsc.frequency.setValueAtTime(4800, this.ctx.currentTime);
+      
+      // Micro LFO frequency drift
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      lfo.frequency.value = 0.35;
+      lfoGain.gain.value = 35;
+      lfo.connect(lfoGain);
+      lfoGain.connect(this.tinnitusOsc.frequency);
+      lfo.start();
+
+      this.tinnitusGain.gain.setValueAtTime(0, this.ctx.currentTime);
+      this.tinnitusGain.gain.linearRampToValueAtTime(0.035 * (this.isMutedState ? 0.2 : this.masterVolumeValue), this.ctx.currentTime + 3);
+
+      this.tinnitusOsc.connect(this.tinnitusGain);
+      this.tinnitusGain.connect(this.masterGain);
+      this.tinnitusOsc.start();
+      this.isTinnitusActive = true;
+    } catch(e) {
+      console.warn("Tinnitus init error:", e);
+    }
+  }
+
+  public stopTinnitus() {
+    if (!this.ctx || !this.tinnitusGain || !this.isTinnitusActive) return;
+    try {
+      const now = this.ctx.currentTime;
+      this.tinnitusGain.gain.linearRampToValueAtTime(0.0001, now + 1.5);
+      setTimeout(() => {
+        if (this.tinnitusOsc) {
+          try { this.tinnitusOsc.stop(); } catch(e) {}
+          this.tinnitusOsc.disconnect();
+          this.tinnitusOsc = null;
+        }
+        if (this.tinnitusGain) {
+          this.tinnitusGain.disconnect();
+          this.tinnitusGain = null;
+        }
+        this.isTinnitusActive = false;
+      }, 1600);
+    } catch(e) {}
+  }
+
+  // --- CARTOGRAPHY & LOCATION ACOUSTICS ---
+  public updateLocationAcoustics(locationName?: string, lighting?: string) {
+    if (!this.ctx || this.currentMode !== 'game') return;
+    const name = (locationName || '').toLowerCase();
+    const now = this.ctx.currentTime;
+
+    // Subterranean / Cavernous (Crypts, Catacombs, Sewers, Caves)
+    if (name.includes('cripta') || name.includes('catacumba') || name.includes('fosa') || 
+        name.includes('osario') || name.includes('alcantarilla') || name.includes('subterr') || 
+        name.includes('cueva')) {
+      if (this.layerGains.texture) {
+        this.layerGains.texture.gain.setTargetAtTime(0.28, now, 2); // Distant water drops / stone resonance
+      }
+      if (this.layerGains.choir) {
+        this.layerGains.choir.gain.setTargetAtTime(0.25, now, 3); // Cavernous acoustic reflection
+      }
+    } 
+    // Open Wilds / Wasteland / Roads
+    else if (name.includes('camino') || name.includes('bosque') || name.includes('páramo') || 
+             name.includes('sendero') || name.includes('pantano') || name.includes('puente')) {
+      if (this.layerGains.texture) {
+        this.layerGains.texture.gain.setTargetAtTime(0.35, now, 2); // Cold desolate wind
+      }
+      if (this.layerGains.choir) {
+        this.layerGains.choir.gain.setTargetAtTime(0.08, now, 3);
+      }
     }
   }
 
