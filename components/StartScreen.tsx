@@ -763,12 +763,15 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                     </div>
                   </div>
 
-                  {/* COMPACT GOTHIC SIGIL SELECTOR RIBBON */}
+                  {/* COMPACT GOTHIC SIGIL SELECTOR: ALL 24 SIGILS IN 2 ROWS OF 12 */}
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-1">
                       <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold flex items-center gap-1.5">
-                        <span>Sigilo Heráldico</span>
-                        <span className="text-xs text-gold font-normal">({GOTHIC_SIGILS.find(s => s.icon === customIcon)?.label || 'Emblema'})</span>
+                        <span>Sigilo Heráldico:</span>
+                        <span className="text-xs text-gold font-normal px-2 py-0.5 rounded bg-black/50 border border-gold-dim/30 flex items-center gap-1.5">
+                          <span className="text-sm">{customIcon}</span>
+                          <span className="font-semibold">{GOTHIC_SIGILS.find(s => s.icon === customIcon)?.label || 'Emblema'}</span>
+                        </span>
                       </label>
                       <button
                         type="button"
@@ -781,8 +784,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-11 sm:grid-cols-11 gap-1 p-1 bg-black/40 border border-gold-dim/25 rounded-xl">
-                      {GOTHIC_SIGILS.slice(0, 11).map((sig) => {
+                    <div className="grid grid-cols-8 sm:grid-cols-12 gap-1 p-1 bg-black/40 border border-gold-dim/25 rounded-xl">
+                      {GOTHIC_SIGILS.map((sig) => {
                         const isSelected = customIcon === sig.icon;
                         return (
                           <button
