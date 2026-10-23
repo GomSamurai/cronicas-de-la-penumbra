@@ -44,11 +44,28 @@ export const testConnection = async (
   }
 };
 
+export const getGraveyardEchoes = () => {
+  try {
+    const raw = localStorage.getItem('penumbra_graveyard');
+    if (!raw) return [];
+    const souls = JSON.parse(raw);
+    return (Array.isArray(souls) ? souls : []).slice(0, 4).map((s: any) => ({
+      name: s.name,
+      archetype: s.archetype,
+      deathLocation: s.deathLocation || 'tierras de la penumbra',
+      legacyItem: s.legacyItem || 'un amuleto mellado'
+    }));
+  } catch {
+    return [];
+  }
+};
+
 export const startAdventure = async (character: Character): Promise<ServiceResponse> => {
   const maxRetries = 3;
   let attempt = 0;
   const customApiKey = getCustomApiKey();
   const model = getSelectedModel();
+  const ecos = getGraveyardEchoes();
 
   while (attempt < maxRetries) {
     try {
@@ -57,7 +74,7 @@ export const startAdventure = async (character: Character): Promise<ServiceRespo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           type: 'startAdventure', 
-          payload: character,
+          payload: { ...character, ecosDelPanteon: ecos },
           customApiKey: customApiKey || undefined,
           model
         }),
@@ -104,6 +121,7 @@ export const nextTurn = async (
   let attempt = 0;
   const customApiKey = getCustomApiKey();
   const model = getSelectedModel();
+  const ecos = getGraveyardEchoes();
 
   while (attempt < maxRetries) {
     try {
@@ -112,7 +130,7 @@ export const nextTurn = async (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           type: 'nextTurn', 
-          payload: { action, currentState },
+          payload: { action, currentState, ecosDelPanteon: ecos },
           customApiKey: customApiKey || undefined,
           model
         }),

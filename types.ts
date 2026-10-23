@@ -69,6 +69,31 @@ export interface LocationInfo {
   lighting: LocationLighting;
   dangerLevel: LocationDanger;
   exits: string[];
+  connectedLocations?: string[]; // Map node connections
+}
+
+// --- TACTICAL CONDITIONS (ESTADOS DE SUPERVIVENCIA) ---
+export type ConditionType = 'hemorragia' | 'intoxicacion' | 'agotamiento' | 'panico';
+
+export interface TacticalCondition {
+  id: string;
+  name: string;
+  description: string;
+  type: ConditionType;
+  severity: 'leve' | 'moderada' | 'critica';
+}
+
+// --- GRAVEYARD & LEGACY SYSTEM ---
+export interface GraveyardSoul {
+  id: string;
+  name: string;
+  archetype: string;
+  turns: number;
+  date: string;
+  lastWords: string;
+  deathLocation?: string;
+  deathCause?: string;
+  legacyItem?: string;
 }
 
 // --- NEW AFFLICTION SYSTEM ---
@@ -134,9 +159,10 @@ export interface GameState {
   worldFacts: WorldFact[];
   activeThreads: NarrativeThread[];
   
-  // New State Fields
+  // Traumas, Fobias y Condiciones Tácticas
   traumas: Trauma[];
   phobias: Phobia[];
+  conditions?: TacticalCondition[];
   environmentContext: string;
   tensionLevel?: TensionLevel;
 
@@ -180,6 +206,8 @@ export interface AIResponseSchema {
   resolvedTraumas?: string[]; // IDs to remove
   newPhobias?: Phobia[];
   resolvedPhobias?: string[]; // IDs to remove
+  newConditions?: TacticalCondition[];
+  resolvedConditions?: string[]; // IDs to remove
   environmentContext?: string; // New: AI internal spatial/situational memory
   tensionLevel?: TensionLevel; // Dynamic dramatic pacing
 

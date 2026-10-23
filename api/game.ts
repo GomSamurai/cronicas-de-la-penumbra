@@ -47,6 +47,11 @@ const responseSchema: Schema = {
           type: Type.ARRAY, 
           items: { type: Type.STRING }, 
           description: "Lista de salidas o caminos posibles (ej: ['Reja norte cerrada con candado', 'Camino este con patrulla'])." 
+        },
+        connectedLocations: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: "IDs o nombres de ubicaciones adyacentes conectadas a este nodo cartográfico."
         }
       },
       required: ["id", "name", "description", "lighting", "dangerLevel", "exits"],
@@ -185,6 +190,26 @@ const responseSchema: Schema = {
       description: "Fobias, paranoias o neurosis si Cordura < 50%.",
     },
     resolvedPhobias: { type: Type.ARRAY, items: { type: Type.STRING }, description: "IDs de fobias superadas." },
+    newConditions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING, description: "ID único (ej: 'hemorragia_muslo', 'intoxicacion_esporas', 'agotamiento_fardos', 'panico_sombra')" },
+          name: { type: Type.STRING, description: "Nombre visible (ej: 'Hemorragia Profunda', 'Intoxicación por Miasma', 'Agotamiento', 'Pánico Desbocado')" },
+          description: { type: Type.STRING, description: "Efecto táctico inmediato sobre el personaje." },
+          type: { type: Type.STRING, enum: ['hemorragia', 'intoxicacion', 'agotamiento', 'panico'] },
+          severity: { type: Type.STRING, enum: ['leve', 'moderada', 'critica'] }
+        },
+        required: ["id", "name", "description", "type", "severity"]
+      },
+      description: "Estados tácticos temporales de supervivencia si sufre desangrado, toxinas, sobrecarga o paroxismo."
+    },
+    resolvedConditions: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "IDs de condiciones tácticas vendadas, purgadas o descansadas en este turno."
+    },
     environmentContext: { 
       type: Type.STRING, 
       description: "MEMORIA ESPACIAL ESTRICTA: Ubicación física exacta, salidas, barreras, fuentes de luz y amenazas inmediatas del entorno. ACTUALIZA este campo en CADA turno para garantizar coherencia geográfica absoluta." 
@@ -249,10 +274,19 @@ Clasifica en cada turno el estado de la escena en uno de estos niveles:
 ### 5. CARTOGRAFÍA SENSORIAL (locationUpdate)
 - Devuelve siempre en 'locationUpdate' el nombre del lugar, su iluminación ('oscuridad_total' | 'penumbra' | 'antorchas' | 'luz_de_dia'), el peligro ('seguro' | 'inquietante' | 'letal') y las salidas físicas tangibles ('exits').
 
-### 6. SALUD, CORDURA Y DESGASTE
+### 6. SALUD, CORDURA Y ESTADOS TÁCTICOS
 - Salud (HP): Narra cortes profundos, huesos rotos y quemaduras. Si HP baja del 30%, genera un 'Trauma' físico con penalización mecánica estricta (ej: '-2 destreza'). Si HP llega a 0 ('isGameOver': true), narra la muerte sin compasión.
 - Cordura: Se erosiona ante horrores aberrantes, mutilaciones intolerables o desesperación. Se recupera (+2 a +5) descansando en zonas seguras, bebiendo alcohol, consumiendo láudano o resolviendo un misterio vital. Si Cordura cae del 50%, genera una 'Phobia' con su detonante.
+- Condiciones Tácticas de Supervivencia ('newConditions' / 'resolvedConditions'):
+  * 'hemorragia': Cortes sangrantes que causan dolor y goteo constante. Si el jugador se venda con telas limpias o cauteriza la herida, resuélvela en 'resolvedConditions'.
+  * 'intoxicacion': Por comer carroña podrida, beber agua ponzoñosa o respirar miasmas y veneno.
+  * 'agotamiento': Por cargar peso excesivo o marchar sin descanso.
+  * 'panico': Por colapso de cordura repentino.
 - Entropía de Inventario: Todo se desgasta. Actualiza las etiquetas y descripciones de los objetos ('inventoryUpdates') cuando se usen o sufran desgaste.
+
+### 7. CARTOGRAFÍA Y ECOS DEL PANTEÓN
+- Red de Lugares: En 'locationUpdate.connectedLocations', especifica los nombres o IDs de lugares vecinos que conectan con la sala actual para nutrir el Atlas Mental.
+- Ecos de Caídos: Si en el contexto se incluyen 'Ecos del Panteón', incorpora ocasionalmente sus restos descompuestos, grabados o reliquias en esas ubicaciones.
 
 ### 7. DESAFÍOS DE DADOS (challenge)
 - Incluye un 'challenge' cuando la acción del jugador sea arriesgada y el éxito no esté garantizado.
@@ -336,7 +370,7 @@ Genera el JSON siguiendo el esquema estricto.
     if (type === 'nextTurn') {
       const { action, currentState } = payload as { action: string, currentState: GameState };
 
-      // 1. Contexto Mecánico y Estado enriquecido con PNJs y Ubicación
+      // 1. Contexto Mecánico y Estado enriquecido con PNJs, Condiciones y Ubicación
       const mechanicalContext = {
         personaje: {
           nombre: currentState.character.name,
@@ -348,7 +382,8 @@ Genera el JSON siguiendo el esquema estricto.
           hp: `${currentState.hp}/${currentState.maxHp}`,
           cordura: `${currentState.sanity}/100`,
           traumasActivos: (currentState.traumas || []).map(t => `${t.name} (${t.effect})`),
-          fobiasActivas: (currentState.phobias || []).map(p => `${p.name} [Detonante: ${p.trigger}]`)
+          fobiasActivas: (currentState.phobias || []).map(p => `${p.name} [Detonante: ${p.trigger}]`),
+          condicionesTacticas: (currentState.conditions || []).map(c => `${c.name} [Tipo: ${c.type}, Gravedad: ${c.severity}] - ${c.description}`)
         },
         inventario: (currentState.inventory || []).map(i => ({
           nombre: i.name,
@@ -359,7 +394,8 @@ Genera el JSON siguiendo el esquema estricto.
           nombre: currentState.currentLocation.name,
           iluminacion: currentState.currentLocation.lighting,
           peligro: currentState.currentLocation.dangerLevel,
-          salidasVisibles: currentState.currentLocation.exits
+          salidasVisibles: currentState.currentLocation.exits,
+          conexionesAdyacentes: currentState.currentLocation.connectedLocations || []
         } : (currentState.environmentContext || "Ubicación desconocida"),
         personajesConocidos: (currentState.npcs || []).map(n => ({
           id: n.id,
@@ -371,24 +407,53 @@ Genera el JSON siguiendo el esquema estricto.
           ubicacion: n.location || "desconocida"
         })),
         tramasActivas: (currentState.activeThreads || []).map(t => `${t.title}: ${t.description}`),
-        hechosConocidos: (currentState.worldFacts || []).slice(-8).map(f => f.text),
+        hechosConocidos: (currentState.worldFacts || []).slice(-10).map(f => f.text),
         tensionPrevia: currentState.tensionLevel || 'tension',
         turnoNumero: currentState.turnCount + 1
       };
 
-      // 2. Extracción de Memoria Continua Multiturno (hasta los últimos 6 pasajes)
+      // 2. ALGORITMO DE MEMORIA PIRAMIDAL (CONSOLIDACIÓN PROFUNDA)
       const narrativeHistory = currentState.narrativeHistory || [];
       const userHistory = (currentState.history || []).filter(h => h.role === 'user');
       
-      const turnsToInclude = Math.min(6, narrativeHistory.length);
-      const recentNarratives = narrativeHistory.slice(-turnsToInclude);
-      
-      let chronicle = "";
-      if (narrativeHistory.length > turnsToInclude) {
-        chronicle += `[SINOPSIS ACUMULADA: La vigilia comenzó hace ${narrativeHistory.length} pasajes. El personaje ha sobrevivido a varios encuentros y se encuentra en su posición actual.]\n\n`;
+      let chronicle = "=== MEMORIA PROFUNDA DE LA VIGILIA (CONSOLIDACIÓN PIRAMIDAL) ===\n\n";
+
+      // Nivel 1: Ancla de Origen (Cómo y dónde comenzó la vigilia)
+      if (narrativeHistory.length > 0) {
+        chronicle += `[ANCLA DE ORIGEN - Pasaje 1]:\n${narrativeHistory[0].narrative.slice(0, 350)}...\n\n`;
       }
 
-      chronicle += "--- CRÓNICA DE LOS PASAJES RECIENTES (MEMORIA CONTINUA) ---\n";
+      // Nivel 2: Hitos Históricos y Cicatrices Permanentes
+      const milestones: string[] = [];
+      if (currentState.traumas?.length) {
+        milestones.push(`Traumas Físicos: ${currentState.traumas.map(t => `${t.name} (${t.effect})`).join('; ')}`);
+      }
+      if (currentState.phobias?.length) {
+        milestones.push(`Fobias y Terrores Mentales: ${currentState.phobias.map(p => `${p.name} [Detonante: ${p.trigger}]`).join('; ')}`);
+      }
+      const deadOrHostileNpcs = (currentState.npcs || []).filter(n => n.status === 'muerto' || n.relationship === 'hostil' || n.relationship === 'enemigo_mortal');
+      if (deadOrHostileNpcs.length) {
+        milestones.push(`PNJs Muertos u Hostiles: ${deadOrHostileNpcs.map(n => `${n.name} (${n.status}, ${n.relationship})`).join('; ')}`);
+      }
+      if (milestones.length > 0) {
+        chronicle += `[HITOS HISTÓRICOS Y MARCAS DEL PASADO]:\n${milestones.map(m => `• ${m}`).join('\n')}\n\n`;
+      }
+
+      // Nivel 3: Ecos del Panteón (Almas caídas del pasado)
+      const { ecosDelPanteon } = payload as { ecosDelPanteon?: Array<{ name: string; archetype: string; deathLocation?: string; legacyItem?: string }> };
+      if (ecosDelPanteon && ecosDelPanteon.length > 0) {
+        chronicle += `[ECOS DEL PANTEÓN - Almas Caídas en esta Tierra]:\n`;
+        ecosDelPanteon.slice(0, 3).forEach(soul => {
+          chronicle += `• ${soul.name} (${soul.archetype}), pereció en "${soul.deathLocation || 'las sombras'}". Dejó atrás: ${soul.legacyItem || 'un relicario agrietado'}.\n`;
+        });
+        chronicle += `(Si visitas esa zona o examinas restos antiguos, puedes incorporar detalles o vestigios de estos caídos).\n\n`;
+      }
+
+      // Nivel 4: Memoria Continua Inmediata (Últimos 5 pasajes con texto completo)
+      const turnsToInclude = Math.min(5, narrativeHistory.length);
+      const recentNarratives = narrativeHistory.slice(-turnsToInclude);
+
+      chronicle += "--- CRÓNICA DE LOS PASAJES RECIENTES (MEMORIA INMEDIATA) ---\n";
       recentNarratives.forEach((turn, idx) => {
         const turnIndexInTotal = narrativeHistory.length - turnsToInclude + idx;
         const previousUserAction = userHistory[turnIndexInTotal - 1]?.content;

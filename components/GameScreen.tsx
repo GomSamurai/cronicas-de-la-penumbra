@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, NPC, LocationInfo } from '../types';
+import { GameState, TurnData, CharacterAttributes, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, NPC, LocationInfo, TacticalCondition, GraveyardSoul } from '../types';
 import { audioSystem } from '../services/audioService';
 import TypewriterBlock from './TypewriterBlock';
 import { exportStoryToPDF } from '../services/exportService';
 import AudioController from './AudioController';
 import SettingsModal, { getVisualEffectsSetting } from './SettingsModal';
+import AtlasModal from './AtlasModal';
 
 interface GameScreenProps {
   gameState: GameState;
@@ -35,6 +36,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [visualEffectsEnabled, setVisualEffectsEnabled] = useState(getVisualEffectsSetting());
   const [showDiceLog, setShowDiceLog] = useState(false);
+  const [showAtlasModal, setShowAtlasModal] = useState(false);
   const [whisperIdx, setWhisperIdx] = useState(0);
   
   // Inventory Interaction State
@@ -288,15 +290,21 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
     if (isDead && !hasSavedDeathRef.current) {
       hasSavedDeathRef.current = true;
       try {
-        const graveyard = JSON.parse(localStorage.getItem('penumbra_graveyard') || '[]');
+        const graveyard: GraveyardSoul[] = JSON.parse(localStorage.getItem('penumbra_graveyard') || '[]');
         const id = gameState.character.name + '_' + Date.now();
+        const deathLocation = gameState.currentLocation?.name || 'Paraje Desconocido';
+        const deathCause = gameState.hp <= 0 ? 'Heridas mortales en combate o caída' : 'Locura irreversible y pánico';
+        const legacyItem = gameState.inventory?.[0]?.name || 'Amuleto desgastado';
         graveyard.unshift({
            id: id,
            name: gameState.character.name,
            archetype: gameState.character.archetype,
            turns: gameState.turnCount,
            date: new Date().toISOString(),
-           lastWords: gameState.narrativeHistory[gameState.narrativeHistory.length - 1]?.narrative.substring(0, 150) + '...'
+           lastWords: gameState.narrativeHistory[gameState.narrativeHistory.length - 1]?.narrative.substring(0, 150) + '...',
+           deathLocation,
+           deathCause,
+           legacyItem
         });
         localStorage.setItem('penumbra_graveyard', JSON.stringify(graveyard));
         localStorage.removeItem('penumbra_save');
@@ -498,6 +506,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const handleUseItem = (itemName: string) => {
     audioSystem.playLowButton();
     onAction(`[USAR] ${itemName}`);
+    setSelectedItem(null);
+  };
+
+  const handleEquipItem = (itemName: string) => {
+    audioSystem.playClick();
+    onAction(`[EQUIPAR/EMPUÑAR] ${itemName}`);
     setSelectedItem(null);
   };
 
@@ -709,13 +723,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
              Crónicas
            </span>
 
-           {/* Location Badge */}
-           {gameState.currentLocation && (
-             <div className="hidden sm:flex items-center gap-1.5 text-xs border-l border-gold-dim/40 pl-3 text-parchment-dim shrink truncate max-w-[200px] md:max-w-xs">
-               <span className="text-gold-dim">🏛️</span>
-               <span className="text-bone font-serif italic truncate">{gameState.currentLocation.name}</span>
-             </div>
-           )}
+           {/* Interactive Cartography / Atlas Badge */}
+           <button 
+             onClick={() => { audioSystem.playClick(); setShowAtlasModal(true); }}
+             className="hidden sm:flex items-center gap-1.5 text-xs border-l border-gold-dim/40 pl-3 text-parchment-dim hover:text-gold transition-colors shrink truncate max-w-[220px] md:max-w-xs group cursor-pointer text-left"
+             title="Consultar Cartografía Mental (Atlas)"
+           >
+             <span className="text-gold-dim group-hover:scale-110 transition-transform">🗺️</span>
+             <span className="text-bone font-serif italic truncate group-hover:text-gold">
+               {gameState.currentLocation ? gameState.currentLocation.name : "Atlas"}
+             </span>
+             <span className="hidden lg:inline text-[9px] uppercase tracking-wider text-gold-dim/70 bg-stone-900 border border-gold-dim/30 px-1 rounded ml-1">
+               Cartografía
+             </span>
+           </button>
 
            {/* Tension Badge */}
            {gameState.tensionLevel && (
@@ -813,7 +834,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
               
               {/* --- NEW: AFFLICTIONS SECTION --- */}
               {hasAfflictions && (
-                <div className="mb-10 animate-fade-in">
+                <div className="mb-8 animate-fade-in">
                    <h3 className="text-blood-bright text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Afecciones</h3>
                    <div className="space-y-3">
                       {gameState.traumas && gameState.traumas.map((t, i) => (
@@ -834,6 +855,47 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                             </div>
                          </div>
                       ))}
+                   </div>
+                </div>
+              )}
+
+              {/* --- TACTICAL CONDITIONS (ESTADOS DE SUPERVIVENCIA) --- */}
+              {gameState.conditions && gameState.conditions.length > 0 && (
+                <div className="mb-8 animate-fade-in">
+                   <h3 className="text-amber-500 text-xs uppercase tracking-[0.2em] mb-3 font-display font-bold border-b border-gold-dim/20 pb-2 flex items-center justify-between">
+                     <span>Estados Tácticos</span>
+                     <span className="text-[10px] text-zinc-400 font-mono">({gameState.conditions.length})</span>
+                   </h3>
+                   <div className="space-y-2">
+                      {gameState.conditions.map((cond) => {
+                         const getConditionStyle = (type: string) => {
+                            switch(type) {
+                              case 'hemorragia':
+                                return { icon: '🩸', border: 'border-blood/60', bg: 'bg-blood/20', text: 'text-blood-bright' };
+                              case 'intoxicacion':
+                                return { icon: '☠️', border: 'border-emerald-600/50', bg: 'bg-emerald-950/40', text: 'text-emerald-400' };
+                              case 'agotamiento':
+                                return { icon: '⚠️', border: 'border-amber-600/50', bg: 'bg-amber-950/40', text: 'text-amber-400' };
+                              case 'panico':
+                                return { icon: '👁️', border: 'border-purple-600/50', bg: 'bg-purple-950/40', text: 'text-purple-300' };
+                              default:
+                                return { icon: '⚡', border: 'border-gold-dim/40', bg: 'bg-void/60', text: 'text-parchment' };
+                            }
+                         };
+                         const style = getConditionStyle(cond.type);
+                         return (
+                            <div key={cond.id} className={`${style.bg} ${style.border} border p-2.5 rounded-lg flex items-start gap-2.5 text-xs shadow-md group`} title={cond.description}>
+                               <span className="text-base select-none">{style.icon}</span>
+                               <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                     <span className={`font-display font-bold uppercase tracking-wider ${style.text}`}>{cond.name}</span>
+                                     <span className="text-[9px] uppercase tracking-widest text-zinc-400 px-1.5 py-0.2 bg-black/40 rounded border border-white/5">{cond.severity}</span>
+                                  </div>
+                                  <p className="text-[11px] text-parchment-dim mt-0.5 line-clamp-2 italic">{cond.description}</p>
+                               </div>
+                            </div>
+                         );
+                      })}
                    </div>
                 </div>
               )}
@@ -1323,12 +1385,34 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
             )}
 
             <p className="text-parchment font-serif text-lg leading-relaxed italic mb-6">{activeItemObj.description}</p>
-            <div className={`grid grid-cols-2 gap-3 mb-4 ${showItemChat ? 'hidden' : 'grid'}`}>
-               <button onClick={() => handleUseItem(activeItemObj.name)} disabled={isLoading} className="px-4 py-3 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.2em] font-bold transition-all rounded shadow-sm">USAR</button>
-               <button onClick={() => handleInspectItem(activeItemObj.name)} disabled={isLoading} className="px-4 py-3 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.2em] font-bold transition-all rounded shadow-sm">EXAMINAR</button>
-               <button onClick={() => handleCombineStart(activeItemObj.name)} disabled={isLoading} className="px-4 py-3 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.2em] font-bold transition-all rounded shadow-sm">COMBINAR</button>
-               <button onClick={() => handleDiscardItem(activeItemObj.name)} disabled={isLoading} className="px-4 py-3 border border-zinc-800 hover:border-blood hover:bg-blood/10 hover:text-blood-bright text-zinc-500 font-display text-xs tracking-[0.2em] font-bold transition-all rounded shadow-sm">DESCARTAR</button>
-               <button onClick={() => { audioSystem.playClick(); setShowItemChat(true); }} disabled={isLoading} className="col-span-2 px-4 py-3 border border-gold/40 hover:bg-gold/10 hover:border-gold text-gold font-display text-xs tracking-[0.2em] font-bold transition-all rounded shadow-[0_0_10px_rgba(197,160,89,0.1)]">ACCIÓN LIBRE</button>
+            {/* Quick Tactical Treatments if applicable */}
+            {gameState.conditions && gameState.conditions.length > 0 && !showItemChat && (
+              <div className="mb-3 p-2.5 bg-amber-950/30 border border-amber-700/40 rounded flex flex-col gap-1.5">
+                <span className="text-[9px] uppercase tracking-wider text-amber-400 font-display font-bold">Tratar Estados con este Objeto</span>
+                {gameState.conditions.map(c => (
+                   <button
+                     key={c.id}
+                     onClick={() => {
+                        audioSystem.playLowButton();
+                        onAction(`[TRATAR ESTADO] Aplico ${activeItemObj.name} para intentar aliviar o curar mi estado de ${c.name} (${c.type}).`);
+                        setSelectedItem(null);
+                     }}
+                     className="text-left text-xs px-2.5 py-1.5 bg-black/40 hover:bg-gold/20 hover:text-gold border border-white/5 rounded transition-colors text-parchment-dim flex items-center justify-between"
+                   >
+                     <span>Aliviar {c.name}</span>
+                     <span className="text-[10px] text-zinc-500 font-mono">1 Turno</span>
+                   </button>
+                ))}
+              </div>
+            )}
+
+            <div className={`grid grid-cols-2 gap-2.5 mb-4 ${showItemChat ? 'hidden' : 'grid'}`}>
+               <button onClick={() => handleUseItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">USAR</button>
+               <button onClick={() => handleEquipItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">EQUIPAR</button>
+               <button onClick={() => handleInspectItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">EXAMINAR</button>
+               <button onClick={() => handleCombineStart(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">COMBINAR</button>
+               <button onClick={() => handleDiscardItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-800 hover:border-blood hover:bg-blood/10 hover:text-blood-bright text-zinc-500 font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">DESCARTAR</button>
+               <button onClick={() => { audioSystem.playClick(); setShowItemChat(true); }} disabled={isLoading} className="px-3 py-2.5 border border-gold/40 hover:bg-gold/10 hover:border-gold text-gold font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-[0_0_10px_rgba(197,160,89,0.1)]">ACCIÓN LIBRE</button>
             </div>
             {showItemChat && (
               <div className="flex flex-col gap-2 animate-fade-in">
@@ -1510,6 +1594,14 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
             </div>
          </div>
       )}
+
+      {/* Atlas Modal (Cartografía Mental) */}
+      <AtlasModal
+        isOpen={showAtlasModal}
+        onClose={() => setShowAtlasModal(false)}
+        currentLocation={gameState.currentLocation}
+        visitedLocations={gameState.visitedLocations || []}
+      />
 
       {/* Settings Modal */}
       <SettingsModal 

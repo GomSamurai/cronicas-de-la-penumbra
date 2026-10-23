@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { audioSystem } from '../services/audioService';
 import AudioController from './AudioController';
 import SettingsModal from './SettingsModal';
+import { GraveyardSoul } from '../types';
 
 interface HomeScreenProps {
   onNewGame: () => void;
@@ -14,7 +15,7 @@ type ModalType = 'none' | 'manual' | 'about' | 'graveyard' | 'settings';
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResumeLocal }) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [hasLocalSave, setHasLocalSave] = useState(false);
-  const [graveyardData, setGraveyardData] = useState<any[]>([]);
+  const [graveyardData, setGraveyardData] = useState<GraveyardSoul[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -266,22 +267,74 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
 
             {activeModal === 'graveyard' && (
              <div className="text-left font-serif">
-                <h2 className="text-3xl font-display text-blood-bright mb-6 tracking-widest uppercase border-b border-blood-bright/30 pb-4">El Panteón</h2>
+                <div className="flex justify-between items-center border-b border-blood-bright/30 pb-4 mb-6">
+                   <div>
+                      <h2 className="text-3xl font-display text-blood-bright tracking-widest uppercase">El Panteón</h2>
+                      <p className="text-xs text-parchment-dim italic mt-1">Epitafios de almas devoradas por la penumbra</p>
+                   </div>
+                   {graveyardData.length > 0 && (
+                      <button
+                         onClick={() => {
+                            if (confirm("¿Consagrar y purificar este panteón? Se borrarán los recuerdos de las almas caídas.")) {
+                               localStorage.removeItem('penumbra_graveyard');
+                               setGraveyardData([]);
+                            }
+                         }}
+                         className="text-[10px] uppercase tracking-widest px-2.5 py-1 text-zinc-500 hover:text-blood-bright border border-zinc-800 hover:border-blood/40 rounded transition-colors"
+                      >
+                         Purificar Tierra
+                      </button>
+                   )}
+                </div>
+
                 {graveyardData.length === 0 ? (
-                   <p className="text-parchment-dim italic text-center py-8">El cementerio aguarda su primera lápida.</p>
+                   <div className="py-12 text-center">
+                      <div className="text-4xl text-zinc-700 mb-3">⚰️</div>
+                      <p className="text-parchment-dim italic">El panteón yace en silencio. Ninguna lápida ha sido alzada aún.</p>
+                      <p className="text-xs text-zinc-600 mt-2">Los ecos de futuros fracasos resonarán aquí.</p>
+                   </div>
                 ) : (
-                   <div className="space-y-4">
+                   <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
                       {graveyardData.map((soul) => (
-                         <div key={soul.id} className="bg-blood/5 border border-blood/20 p-4 rounded-lg flex flex-col gap-2 relative">
+                         <div key={soul.id} className="bg-stone-950/80 border border-blood/30 hover:border-blood/60 p-4 rounded-lg flex flex-col gap-2.5 relative transition-all shadow-lg group">
                             <div className="flex justify-between items-start">
-                               <h3 className="text-xl font-display text-bone">{soul.name}</h3>
-                               <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">{new Date(soul.date).toLocaleDateString()}</span>
+                               <div>
+                                  <h3 className="text-xl font-display text-bone tracking-wide group-hover:text-blood-bright transition-colors">{soul.name}</h3>
+                                  <span className="text-xs uppercase tracking-widest text-gold-dim">{soul.archetype}</span>
+                               </div>
+                               <div className="text-right">
+                                  <span className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase block">{new Date(soul.date).toLocaleDateString()}</span>
+                                  <span className="text-[10px] text-parchment-dim font-display tracking-widest uppercase">{soul.turns} pasajes</span>
+                               </div>
                             </div>
-                            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-gold-dim">
-                               <span>{soul.archetype}</span>
-                               <span>Sobrevivió {soul.turns} pasajes</span>
-                            </div>
-                            <p className="text-sm italic text-parchment-dim border-t border-blood/10 pt-3 mt-2 opacity-80 leading-relaxed">"{soul.lastWords}"</p>
+
+                            {(soul.deathLocation || soul.deathCause) && (
+                               <div className="bg-black/40 border border-white/5 rounded p-2 text-xs grid grid-cols-1 sm:grid-cols-2 gap-2 text-zinc-400">
+                                  {soul.deathLocation && (
+                                     <div className="flex items-center gap-1.5 truncate">
+                                        <span className="text-zinc-500">📍</span>
+                                        <span className="truncate italic">{soul.deathLocation}</span>
+                                     </div>
+                                  )}
+                                  {soul.deathCause && (
+                                     <div className="flex items-center gap-1.5 truncate">
+                                        <span className="text-blood-bright/70">💀</span>
+                                        <span className="truncate italic text-zinc-300">{soul.deathCause}</span>
+                                     </div>
+                                  )}
+                               </div>
+                            )}
+
+                            {soul.legacyItem && (
+                               <div className="text-xs text-gold-dim flex items-center gap-1.5 bg-gold/5 border border-gold-dim/20 rounded px-2.5 py-1">
+                                  <span>🕯️</span>
+                                  <span className="italic">Reliquia perdida: <strong>{soul.legacyItem}</strong></span>
+                               </div>
+                            )}
+
+                            <p className="text-sm italic text-parchment-dim border-t border-blood/10 pt-2.5 mt-1 opacity-90 leading-relaxed font-serif">
+                               "{soul.lastWords}"
+                            </p>
                          </div>
                       ))}
                    </div>

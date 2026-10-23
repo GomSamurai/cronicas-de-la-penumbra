@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GameState, Character, GameStatus, TurnData, AIResponseSchema, WorldFact, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, ServiceResponse, NPC, LocationInfo } from './types';
+import { GameState, Character, GameStatus, TurnData, AIResponseSchema, WorldFact, InventoryItem, DiceRollLogEntry, NarrativeThread, Trauma, Phobia, TacticalCondition, ServiceResponse, NPC, LocationInfo } from './types';
 import StartScreen from './components/StartScreen';
 import GameScreen from './components/GameScreen';
 import HomeScreen from './components/HomeScreen';
@@ -106,6 +106,7 @@ const App: React.FC = () => {
         activeThreads: initialThreads,
         traumas: initialTraumas,
         phobias: initialPhobias,
+        conditions: response.newConditions || [],
         environmentContext: response.environmentContext || initial.environmentContext,
         tensionLevel: response.tensionLevel || 'tension',
         npcs: initialNpcs,
@@ -228,6 +229,19 @@ const App: React.FC = () => {
            updatedPhobias = updatedPhobias.filter(p => !response.resolvedPhobias!.includes(p.id));
         }
 
+        // --- TACTICAL CONDITIONS LOGIC ---
+        let updatedConditions = [...(prevState.conditions || [])];
+        if (response.newConditions) {
+           response.newConditions.forEach(c => {
+             if (!updatedConditions.some(existing => existing.id === c.id)) {
+                updatedConditions.push(c);
+             }
+           });
+        }
+        if (response.resolvedConditions && !response.isGameOver) {
+           updatedConditions = updatedConditions.filter(c => !response.resolvedConditions!.includes(c.id));
+        }
+
         // --- NPCS LOGIC ---
         let updatedNpcs = [...(prevState.npcs || [])];
         if (response.newNpcs) {
@@ -302,6 +316,7 @@ const App: React.FC = () => {
           activeThreads: updatedThreads,
           traumas: updatedTraumas,
           phobias: updatedPhobias,
+          conditions: updatedConditions,
           environmentContext: response.environmentContext || prevState.environmentContext,
           tensionLevel: response.tensionLevel || prevState.tensionLevel || 'tension',
           npcs: updatedNpcs,
