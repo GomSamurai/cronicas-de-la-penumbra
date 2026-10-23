@@ -812,8 +812,15 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
         `}>
            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
               <div className="text-center pb-5 border-b border-gold-dim/30 mb-6 relative">
-                 <div className="inline-block px-3 py-0.5 mb-2 rounded border border-gold-dim/30 bg-black/60 text-[9px] uppercase tracking-[0.25em] font-display text-gold-dim">
-                   ✦ Vástago de la Vigilia ✦
+                 <div className="flex items-center justify-center gap-2 mb-2">
+                   {gameState.character.icon && (
+                     <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(197,160,89,0.5)]">
+                       {gameState.character.icon}
+                     </span>
+                   )}
+                   <div className="inline-block px-3 py-0.5 rounded border border-gold-dim/30 bg-black/60 text-[10px] uppercase tracking-[0.25em] font-display text-gold-dim font-bold">
+                     ✦ Vástago de la Vigilia ✦
+                   </div>
                  </div>
                  <h2 className="text-2xl xl:text-3xl font-display font-bold text-bone tracking-wide drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                    {gameState.character.name}

@@ -206,17 +206,17 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
        </div>
 
        {/* Reactive Audio Toggle */}
-       <div className="mb-4 bg-void/50 p-2.5 rounded-lg border border-gold-dim/20 flex items-center justify-between">
+       <div className="mb-4 bg-void/60 p-3 rounded-lg border border-gold-dim/30 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-display font-bold uppercase tracking-wider text-parchment">Dramatismo Reactivo</span>
-            <span className="text-[8px] text-zinc-500">Adapta música al peligro</span>
+            <span className="text-xs font-display font-bold uppercase tracking-wider text-bone">Dramatismo Reactivo</span>
+            <span className="text-[10px] text-stone-300">Adapta música al peligro</span>
           </div>
           <button
             onClick={toggleReactive}
-            className={`px-2 py-0.5 rounded text-[9px] uppercase font-display font-bold border transition-colors ${
+            className={`px-2.5 py-1 rounded text-[10px] uppercase font-display font-bold border transition-colors ${
               isReactive
                 ? 'bg-gold/20 border-gold text-gold shadow-sm'
-                : 'bg-zinc-900 border-zinc-700 text-zinc-500'
+                : 'bg-zinc-900 border-zinc-700 text-stone-400'
             }`}
           >
             {isReactive ? 'ACTIVO' : 'MANUAL'}
@@ -224,19 +224,24 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
        </div>
 
        <div className="mb-5">
-          <label className="flex justify-between text-[10px] uppercase tracking-wider text-parchment-dim mb-2">
+          <label className="flex justify-between text-xs uppercase tracking-wider text-parchment-dim mb-2 font-display font-bold">
              <span>Volumen Maestro</span>
-             <span>{Math.round(masterVol * 100)}%</span>
+             <span className="text-gold font-mono">{Math.round(masterVol * 100)}%</span>
           </label>
           <input 
             type="range" 
             min="0" 
-            max="1" 
+            max="1.5" 
             step="0.01" 
             value={masterVol}
             onChange={changeVolume}
-            className="w-full h-1 bg-void rounded-lg appearance-none cursor-pointer accent-gold"
+            className="w-full h-1.5 bg-void rounded-lg appearance-none cursor-pointer accent-gold"
           />
+          <div className="flex justify-between text-[9px] text-stone-400 font-mono mt-1">
+             <span>0%</span>
+             <span>100% (Estándar)</span>
+             <span className="text-gold-dim font-bold">150% (Potenciado)</span>
+          </div>
        </div>
 
        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
@@ -252,20 +257,20 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
              <button
                 key={layer.id}
                 onClick={() => toggleLayer(layer.id as any)}
-                className={`w-full flex justify-between items-center px-3 py-1.5 rounded border text-[10px] uppercase tracking-widest transition-all
+                className={`w-full flex justify-between items-center px-3 py-2 rounded border text-xs uppercase tracking-wider transition-all font-display font-medium
                    ${!mutedLayers[layer.id] 
-                      ? 'bg-gold/10 border-gold text-bone shadow-[0_0_10px_rgba(197,160,89,0.1)]' 
-                      : 'bg-void border-zinc-800 text-zinc-600 hover:border-zinc-600'}
+                      ? 'bg-gold/15 border-gold text-bone shadow-[0_0_10px_rgba(197,160,89,0.15)]' 
+                      : 'bg-void border-zinc-800 text-stone-400 hover:border-zinc-600'}
                 `}
              >
                 <span>{layer.label}</span>
-                <span className={!mutedLayers[layer.id] ? 'text-gold' : 'text-zinc-700'}>
+                <span className={!mutedLayers[layer.id] ? 'text-gold' : 'text-zinc-600'}>
                    ●
                 </span>
              </button>
           ))}
        </div>
-       <div className="mt-3 text-[8px] text-center text-zinc-600 uppercase tracking-widest">
+       <div className="mt-3 text-[9px] text-center text-stone-400 uppercase tracking-widest font-mono">
           Sintetizador Procedural Web Audio
        </div>
     </div>

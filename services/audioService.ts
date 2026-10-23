@@ -90,7 +90,7 @@ class AudioService {
     this.masterFilter.connect(this.ctx.destination);
 
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = this.isMutedState ? 0 : this.masterVolumeValue;
+    this.masterGain.gain.value = this.isMutedState ? 0 : this.masterVolumeValue * 1.8;
     this.masterGain.connect(this.masterFilter);
     
     // Create procedural reverb
@@ -165,7 +165,7 @@ class AudioService {
   public setMasterVolume(val: number) {
     this.masterVolumeValue = val;
     if (!this.isMutedState && this.masterGain && this.ctx) {
-      this.masterGain.gain.setTargetAtTime(val, this.ctx.currentTime, 0.1);
+      this.masterGain.gain.setTargetAtTime(val * 1.8, this.ctx.currentTime, 0.1);
     }
   }
 
@@ -181,7 +181,7 @@ class AudioService {
 
     if (this.isMutedState) {
         this.isMutedState = false;
-        this.masterGain.gain.setTargetAtTime(this.preMuteVolume, this.ctx.currentTime, 0.1);
+        this.masterGain.gain.setTargetAtTime(this.preMuteVolume * 1.8, this.ctx.currentTime, 0.1);
         this.masterVolumeValue = this.preMuteVolume;
     } else {
         this.preMuteVolume = this.masterVolumeValue > 0 ? this.masterVolumeValue : 1.0;
@@ -221,8 +221,8 @@ class AudioService {
     
     const now = this.ctx.currentTime;
     const targetGains: Record<AudioLayer, number> = mode === 'intro' 
-      ? { drone: 0.15, orchestra: 0.3, piano: 0.4, texture: 0.05, chimes: 0.2, choir: 0.3, subbass: 0.4 }
-      : { drone: 0.25, orchestra: 0.2, piano: 0.3, texture: 0.15, chimes: 0.1, choir: 0.15, subbass: 0.3 };
+      ? { drone: 0.25, orchestra: 0.45, piano: 0.55, texture: 0.12, chimes: 0.35, choir: 0.45, subbass: 0.55 }
+      : { drone: 0.35, orchestra: 0.35, piano: 0.45, texture: 0.22, chimes: 0.22, choir: 0.30, subbass: 0.45 };
 
     Object.keys(targetGains).forEach(k => {
       const key = k as AudioLayer;
@@ -295,22 +295,22 @@ class AudioService {
     // Fine-tuned target gains per tension level
     const tensionGains: Record<TensionLevel, Record<AudioLayer, number>> = {
       calma: {
-        drone: 0.12, orchestra: 0.15, piano: 0.35, texture: 0.05, chimes: 0.25, choir: 0.10, subbass: 0.20
+        drone: 0.20, orchestra: 0.28, piano: 0.50, texture: 0.10, chimes: 0.35, choir: 0.20, subbass: 0.35
       },
       sospecha: {
-        drone: 0.22, orchestra: 0.12, piano: 0.20, texture: 0.22, chimes: 0.30, choir: 0.15, subbass: 0.15
+        drone: 0.30, orchestra: 0.24, piano: 0.32, texture: 0.28, chimes: 0.40, choir: 0.25, subbass: 0.28
       },
       tension: {
-        drone: 0.28, orchestra: 0.22, piano: 0.18, texture: 0.20, chimes: 0.15, choir: 0.20, subbass: 0.35
+        drone: 0.38, orchestra: 0.35, piano: 0.28, texture: 0.28, chimes: 0.25, choir: 0.32, subbass: 0.50
       },
       peligro: {
-        drone: 0.38, orchestra: 0.32, piano: 0.10, texture: 0.30, chimes: 0.05, choir: 0.28, subbass: 0.48
+        drone: 0.48, orchestra: 0.45, piano: 0.18, texture: 0.38, chimes: 0.12, choir: 0.40, subbass: 0.65
       },
       combate: {
-        drone: 0.32, orchestra: 0.38, piano: 0.05, texture: 0.20, chimes: 0.00, choir: 0.22, subbass: 0.55
+        drone: 0.42, orchestra: 0.52, piano: 0.12, texture: 0.30, chimes: 0.05, choir: 0.35, subbass: 0.75
       },
       agonico: {
-        drone: 0.45, orchestra: 0.10, piano: 0.12, texture: 0.35, chimes: 0.00, choir: 0.32, subbass: 0.60
+        drone: 0.55, orchestra: 0.22, piano: 0.20, texture: 0.45, chimes: 0.05, choir: 0.45, subbass: 0.80
       }
     };
 
@@ -462,7 +462,7 @@ class AudioService {
     filter.type = 'lowpass';
     filter.frequency.value = isAccent ? 250 : 180;
 
-    const baseVol = isAccent ? 0.45 : 0.28;
+    const baseVol = isAccent ? 0.65 : 0.40;
     gain.gain.setValueAtTime(0, time);
     gain.gain.linearRampToValueAtTime(baseVol, time + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.001, time + (isAccent ? 0.45 : 0.3));
@@ -611,7 +611,7 @@ class AudioService {
       const white = Math.random() * 2 - 1;
       data[i] = (lastOut + (0.02 * white)) / 1.02;
       lastOut = data[i];
-      data[i] *= 2.0;
+      data[i] *= 3.0;
     }
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
@@ -656,7 +656,7 @@ class AudioService {
          lfo.start();
          
          gain.gain.value = 0;
-         gain.gain.linearRampToValueAtTime(0.05, now + (duration * 0.4)); 
+         gain.gain.linearRampToValueAtTime(0.14, now + (duration * 0.4)); 
          gain.gain.linearRampToValueAtTime(0, now + duration); 
          
          osc.connect(filter);
@@ -690,7 +690,7 @@ class AudioService {
            osc.frequency.value = freq;
            
            gain.gain.setValueAtTime(0, now + timeOffset);
-           gain.gain.linearRampToValueAtTime(0.15, now + timeOffset + 0.05);
+           gain.gain.linearRampToValueAtTime(0.32, now + timeOffset + 0.05);
            gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 3);
            
            osc.connect(gain);
@@ -767,7 +767,7 @@ class AudioService {
            osc.frequency.value = freq;
            
            gain.gain.setValueAtTime(0, now + timeOffset);
-           gain.gain.linearRampToValueAtTime(0.08, now + timeOffset + 0.02);
+           gain.gain.linearRampToValueAtTime(0.18, now + timeOffset + 0.02);
            gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 1.5);
            
            osc.connect(gain);
@@ -810,7 +810,7 @@ class AudioService {
        filter2.Q.value = 2;
        
        gain.gain.setValueAtTime(0, now);
-       gain.gain.linearRampToValueAtTime(0.04, now + (duration * 0.3)); 
+       gain.gain.linearRampToValueAtTime(0.12, now + (duration * 0.3)); 
        gain.gain.linearRampToValueAtTime(0, now + duration); 
        
        osc.connect(filter1);
@@ -841,7 +841,7 @@ class AudioService {
        osc.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.3);
        
        gain.gain.setValueAtTime(0, now);
-       gain.gain.linearRampToValueAtTime(0.6, now + 0.1); 
+       gain.gain.linearRampToValueAtTime(0.85, now + 0.1); 
        gain.gain.exponentialRampToValueAtTime(0.001, now + 4); 
        
        osc.connect(gain);

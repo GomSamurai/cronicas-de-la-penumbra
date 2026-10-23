@@ -21,6 +21,7 @@ export interface Character {
   archetype: string;
   attributes: CharacterAttributes;
   bio: string;
+  icon?: string;
 }
 
 export type TensionLevel = 'calma' | 'sospecha' | 'tension' | 'peligro' | 'combate' | 'agonico';
