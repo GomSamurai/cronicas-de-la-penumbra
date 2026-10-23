@@ -714,27 +714,27 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
       </div>
       
       {/* ----------------- HEADER (FIXED 64px) ----------------- */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-panel border-b border-gold-dim z-[100] flex items-center justify-between px-4 lg:px-6 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-[#0e0c0b]/95 backdrop-blur-md border-b border-gold-dim/40 z-[100] flex items-center justify-between px-4 lg:px-6 shadow-[0_4px_25px_rgba(0,0,0,0.85),inset_0_-1px_0_rgba(197,160,89,0.15)]">
         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm hidden md:inline shadow-black drop-shadow-md shrink-0">
-             Crónicas de la Penumbra
-           </span>
-           <span className="text-gold font-display tracking-[0.2em] font-bold text-sm md:hidden shrink-0">
-             Crónicas
-           </span>
+           <div className="flex items-center gap-2 shrink-0">
+             <span className="text-gold-dim text-xs select-none">✦</span>
+             <span className="text-gold font-display tracking-[0.22em] font-bold text-sm hidden md:inline drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+               Crónicas de la Penumbra
+             </span>
+             <span className="text-gold font-display tracking-[0.2em] font-bold text-sm md:hidden shrink-0">
+               Crónicas
+             </span>
+           </div>
 
-           {/* Interactive Cartography / Atlas Badge */}
+           {/* Interactive Cartography Button */}
            <button 
              onClick={() => { audioSystem.playClick(); setShowAtlasModal(true); }}
-             className="hidden sm:flex items-center gap-1.5 text-xs border-l border-gold-dim/40 pl-3 text-parchment-dim hover:text-gold transition-colors shrink truncate max-w-[220px] md:max-w-xs group cursor-pointer text-left"
-             title="Consultar Cartografía Mental (Atlas)"
+             className="hidden sm:flex items-center gap-2 text-xs border border-gold-dim/40 hover:border-gold bg-black/40 hover:bg-gold/10 px-2.5 py-1 rounded transition-all text-parchment-dim hover:text-gold shrink truncate max-w-[240px] md:max-w-xs group cursor-pointer"
+             title="Abrir Atlas Cartográfico Mental"
            >
-             <span className="text-gold-dim group-hover:scale-110 transition-transform">🗺️</span>
-             <span className="text-bone font-serif italic truncate group-hover:text-gold">
-               {gameState.currentLocation ? gameState.currentLocation.name : "Atlas"}
-             </span>
-             <span className="hidden lg:inline text-[9px] uppercase tracking-wider text-gold-dim/70 bg-stone-900 border border-gold-dim/30 px-1 rounded ml-1">
-               Cartografía
+             <span className="text-gold group-hover:scale-110 transition-transform text-sm">🗺️</span>
+             <span className="font-display uppercase tracking-wider text-[11px] text-bone group-hover:text-gold font-bold truncate">
+               {gameState.currentLocation?.name ? gameState.currentLocation.name : "Cartografía"}
              </span>
            </button>
 
@@ -806,29 +806,59 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
         
         {/* LEFT COLUMN: Character */}
         <aside className={`
-            flex-col bg-panel/90 backdrop-blur-sm border border-gold-dim/30 z-20 shadow-xl overflow-hidden rounded-2xl
+            flex-col gothic-panel z-20 overflow-hidden rounded-2xl
             ${mobileTab === 'character' ? 'flex absolute top-0 left-4 right-4 bottom-24 z-40' : 'hidden'} 
             lg:flex lg:static lg:w-72 xl:w-80 lg:inset-auto lg:h-auto
         `}>
            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              <div className="text-center pb-6 border-b border-gold-dim/20 mb-6">
-                 <h2 className="text-2xl xl:text-3xl font-display text-bone mb-2">{gameState.character.name}</h2>
-                 <p className="text-gold italic text-lg font-serif">{cleanArchetype(gameState.character.archetype)}</p>
+              <div className="text-center pb-5 border-b border-gold-dim/30 mb-6 relative">
+                 <div className="inline-block px-3 py-0.5 mb-2 rounded border border-gold-dim/30 bg-black/60 text-[9px] uppercase tracking-[0.25em] font-display text-gold-dim">
+                   ✦ Vástago de la Vigilia ✦
+                 </div>
+                 <h2 className="text-2xl xl:text-3xl font-display font-bold text-bone tracking-wide drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                   {gameState.character.name}
+                 </h2>
+                 <div className="flex items-center justify-center gap-2 mt-1">
+                   <span className="h-px w-6 bg-gradient-to-r from-transparent to-gold-dim"></span>
+                   <p className="text-gold italic text-base font-serif tracking-wider">{cleanArchetype(gameState.character.archetype)}</p>
+                   <span className="h-px w-6 bg-gradient-to-l from-transparent to-gold-dim"></span>
+                 </div>
               </div>
-              <div className="space-y-8 mb-8">
+              <div className="space-y-5 mb-8">
+                  {/* Vitalidad */}
                   <div className="group">
-                     <div className="flex justify-between items-baseline mb-2">
-                        <span className="text-xs uppercase tracking-[0.2em] font-display font-bold text-parchment-dim">Vitalidad</span>
-                        <span className={`font-display font-bold text-lg ${gameState.hp < 6 ? 'text-blood-bright animate-pulse' : 'text-bone'}`}>{gameState.hp}/{gameState.maxHp}</span>
+                     <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                           <span className="text-blood-bright text-xs">🩸</span>
+                           <span className="text-[11px] uppercase tracking-[0.2em] font-display font-bold text-parchment-dim group-hover:text-blood-bright transition-colors">Vitalidad</span>
+                        </div>
+                        <span className={`font-display font-bold text-sm px-2 py-0.5 rounded bg-black/50 border border-white/5 ${gameState.hp < 6 ? 'text-blood-bright border-blood/60 animate-pulse' : 'text-bone'}`}>
+                          {gameState.hp} <span className="text-xs text-zinc-500">/ {gameState.maxHp}</span>
+                        </span>
                      </div>
-                     <div className="h-2 bg-void border border-gold-dim/30 rounded-full overflow-hidden"><div className="h-full bg-blood transition-all duration-700 ease-out rounded-full" style={{ width: `${hpPercent}%` }}/></div>
+                     <div className="stat-bezel h-3.5">
+                        <div className="h-full blood-liquid transition-all duration-700 ease-out rounded-full relative overflow-hidden" style={{ width: `${hpPercent}%` }}>
+                           <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
+                        </div>
+                     </div>
                   </div>
+
+                  {/* Cordura */}
                   <div className="group">
-                     <div className="flex justify-between items-baseline mb-2">
-                        <span className="text-xs uppercase tracking-[0.2em] font-display font-bold text-parchment-dim">Cordura</span>
-                        <span className="font-display font-bold text-lg text-bone">{gameState.sanity}%</span>
+                     <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                           <span className="text-sanity text-xs">👁️</span>
+                           <span className="text-[11px] uppercase tracking-[0.2em] font-display font-bold text-parchment-dim group-hover:text-cyan-300 transition-colors">Cordura</span>
+                        </div>
+                        <span className="font-display font-bold text-sm px-2 py-0.5 rounded bg-black/50 border border-white/5 text-bone">
+                          {gameState.sanity}<span className="text-xs text-zinc-500">%</span>
+                        </span>
                      </div>
-                     <div className="h-2 bg-void border border-gold-dim/30 rounded-full overflow-hidden"><div className="h-full bg-sanity transition-all duration-700 ease-out rounded-full" style={{ width: `${sanityPercent}%` }}/></div>
+                     <div className="stat-bezel h-3.5">
+                        <div className="h-full sanity-liquid transition-all duration-700 ease-out rounded-full relative overflow-hidden" style={{ width: `${sanityPercent}%` }}>
+                           <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
+                        </div>
+                     </div>
                   </div>
               </div>
               
@@ -900,75 +930,104 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                 </div>
               )}
 
-              <div className="mb-10">
-                 <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Atributos</h3>
-                 <div className="grid grid-cols-2 gap-2">
+              <div className="mb-8">
+                 <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-3.5 font-display font-bold border-b border-gold-dim/25 pb-2 flex items-center justify-between">
+                    <span>Talismanes de Atributo</span>
+                    <span className="text-[10px] text-gold-dim/60 font-mono">✦ D20 ✦</span>
+                 </h3>
+                 <div className="grid grid-cols-2 gap-2.5">
                    {(Object.entries(gameState.character.attributes) as [keyof CharacterAttributes, number][]).map(([key, value]) => {
                       const effective = getEffectiveAttribute(key, value);
+                      const attrMeta: Record<string, { icon: string; short: string }> = {
+                        fuerza: { icon: '⚔️', short: 'Fuerza' },
+                        destreza: { icon: '🏹', short: 'Destreza' },
+                        constitucion: { icon: '🛡️', short: 'Constitución' },
+                        inteligencia: { icon: '📜', short: 'Inteligencia' },
+                        sabiduria: { icon: '🔮', short: 'Sabiduría' },
+                        carisma: { icon: '👑', short: 'Carisma' }
+                      };
+                      const meta = attrMeta[key] || { icon: '◆', short: key };
                       return (
-                        <div key={key} className={`bg-void/50 border p-2 text-center rounded-lg transition-colors duration-500 ${effective.isPenalized ? 'border-blood/50 bg-blood/5' : 'border-gold-dim/20'}`}>
-                           <span className={`block text-xl font-display font-bold ${effective.isPenalized ? 'text-blood-bright' : 'text-bone'}`}>
+                        <div 
+                          key={key} 
+                          className={`talisman-card p-2.5 text-center rounded-xl relative overflow-hidden group ${
+                            effective.isPenalized 
+                              ? 'border-blood/60 bg-blood/10 shadow-[0_0_12px_rgba(138,28,28,0.3)]' 
+                              : ''
+                          }`}
+                        >
+                           <div className="flex items-center justify-center gap-1 text-[10px] text-gold-dim font-display tracking-widest uppercase mb-1">
+                              <span className="text-xs">{meta.icon}</span>
+                              <span className="truncate">{meta.short}</span>
+                           </div>
+                           <span className={`block text-2xl font-display font-bold tracking-tight drop-shadow-md ${effective.isPenalized ? 'text-blood-bright animate-pulse' : 'text-bone group-hover:text-gold transition-colors'}`}>
                              {effective.value}
                            </span>
-                           <span className="text-[9px] uppercase tracking-widest text-parchment-dim block">{key}</span>
+                           {effective.isPenalized && (
+                             <span className="text-[9px] uppercase tracking-wider text-blood-bright font-bold">Penalizado</span>
+                           )}
                         </div>
                       );
                    })}
                  </div>
               </div>
-              <div className="mb-10">
-                 <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-4 font-display font-bold border-b border-gold-dim/20 pb-2">Crónica</h3>
-                 <div className="space-y-3">
-                    <div className="flex justify-between items-center bg-void/30 p-3 rounded-lg border border-white/5">
-                       <span className="text-[10px] uppercase tracking-widest text-parchment-dim">Pasajes</span>
-                       <span className="text-3xl font-display text-gold drop-shadow-lg">{gameState.turnCount}</span>
+              <div className="mb-6">
+                 <h3 className="text-gold-dim text-xs uppercase tracking-[0.2em] mb-3.5 font-display font-bold border-b border-gold-dim/25 pb-2">Crónica de la Vigilia</h3>
+                 <div className="space-y-2.5">
+                    <div className="flex justify-between items-center bg-black/40 border border-gold-dim/20 p-3 rounded-xl shadow-inner">
+                       <span className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim font-display">Pasajes Vívidos</span>
+                       <span className="text-2xl font-display font-bold text-gold drop-shadow-[0_2px_8px_rgba(197,160,89,0.4)]">{gameState.turnCount}</span>
                     </div>
-                    <div className="flex justify-between items-center bg-void/30 p-3 rounded-lg border border-white/5">
-                       <span className="text-[10px] uppercase tracking-widest text-parchment-dim">Estado</span>
-                       <span className={`text-base font-display font-bold tracking-widest uppercase ${conditionText === 'Vigoroso' ? 'text-bone' : conditionText === 'Agónico' || conditionText === 'Demente' ? 'text-blood-bright' : 'text-parchment'}`}>{conditionText}</span>
+                    <div className="flex justify-between items-center bg-black/40 border border-gold-dim/20 p-3 rounded-xl shadow-inner">
+                       <span className="text-[10px] uppercase tracking-[0.2em] text-parchment-dim font-display">Templanza</span>
+                       <span className={`text-xs font-display font-bold tracking-widest uppercase px-2.5 py-1 rounded border ${
+                         conditionText === 'Vigoroso' 
+                           ? 'text-emerald-400 bg-emerald-950/30 border-emerald-700/40' 
+                           : conditionText === 'Agónico' || conditionText === 'Demente' 
+                           ? 'text-blood-bright bg-blood/20 border-blood/60 animate-pulse' 
+                           : 'text-amber-300 bg-amber-950/30 border-amber-700/40'
+                       }`}>
+                         {conditionText}
+                       </span>
                     </div>
                     
-                    {/* --- TOKEN DISPLAY --- */}
+                    {/* Token tracking */}
                     {gameState.sessionTokens && (
-                      <div className="bg-void/30 p-3 rounded-lg border border-white/5 space-y-2">
-                          <div className="flex justify-between items-center mb-1 pb-1 border-b border-white/5">
-                             <span className="text-[9px] uppercase tracking-widest text-parchment-dim">Consumo</span>
-                             <span className="text-[9px] uppercase tracking-widest text-gold-dim font-bold">Tokens</span>
-                          </div>
-                          <div className="flex justify-between text-[10px] font-mono">
-                             <span className="text-zinc-500">Total:</span>
-                             <span className="text-parchment">{gameState.sessionTokens.totalTokens.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between text-[9px] font-mono text-zinc-600">
-                             <span>(Últ. Turno: {gameState.lastTurnTokens?.totalTokens.toLocaleString() || 0})</span>
-                          </div>
+                      <div className="bg-black/40 border border-gold-dim/15 p-2.5 rounded-xl text-[10px] font-mono text-zinc-400 flex justify-between items-center">
+                         <span className="text-zinc-500 uppercase font-display text-[9px] tracking-wider">Caudal Éter:</span>
+                         <span className="text-gold-dim font-bold">{gameState.sessionTokens.totalTokens.toLocaleString()} tokens</span>
                       </div>
                     )}
                  </div>
               </div>
            </div>
-           <div className="p-4 border-t border-gold-dim/20 bg-void/20 flex justify-center">
-              <button onClick={() => { audioSystem.playClick(); setShowDiceLog(true); }} className="w-10 h-10 flex items-center justify-center text-parchment-dim hover:text-gold transition-all hover:bg-white/5 rounded-full border border-transparent hover:border-gold-dim/30 group" title="Registro de Azar">
-                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6 group-hover:scale-110 transition-transform"><path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+           <div className="p-4 border-t border-gold-dim/25 bg-black/40 flex justify-center">
+              <button 
+                onClick={() => { audioSystem.playClick(); setShowDiceLog(true); }} 
+                className="w-full py-2.5 px-3 flex items-center justify-center gap-2 text-parchment-dim hover:text-gold transition-all bg-black/50 hover:bg-gold/10 rounded-xl border border-gold-dim/30 hover:border-gold group shadow-md" 
+                title="Abrir Registro del Azar y Tiradas"
+              >
+                 <span className="text-base group-hover:scale-125 transition-transform text-gold">🎲</span>
+                 <span className="text-xs uppercase tracking-[0.2em] font-display font-bold text-bone group-hover:text-gold">Registro del Azar</span>
               </button>
            </div>
         </aside>
 
         {/* CENTER COLUMN: Narrative */}
         <main className={`
-            flex-col min-w-0 bg-void/60 border rounded-2xl overflow-hidden relative backdrop-blur-sm transition-all duration-700
+            flex-col min-w-0 gothic-panel rounded-2xl overflow-hidden relative transition-all duration-700
             ${mobileTab === 'narrative' ? 'flex w-full' : 'hidden'}
             lg:flex lg:flex-1
             ${
               gameState.tensionLevel === 'combate' || gameState.tensionLevel === 'agonico'
-                ? 'border-blood/70 shadow-[0_0_35px_rgba(138,28,28,0.25)]'
+                ? 'border-blood shadow-[0_0_40px_rgba(138,28,28,0.35)]'
                 : gameState.tensionLevel === 'peligro'
-                ? 'border-amber-700/60 shadow-[0_0_25px_rgba(180,80,10,0.2)]'
+                ? 'border-amber-600/70 shadow-[0_0_30px_rgba(180,80,10,0.25)]'
                 : gameState.tensionLevel === 'tension'
-                ? 'border-gold-dim/60 shadow-[0_0_20px_rgba(197,160,89,0.15)]'
+                ? 'border-gold-dim/70 shadow-[0_0_25px_rgba(197,160,89,0.2)]'
                 : gameState.tensionLevel === 'sospecha'
-                ? 'border-cyan-950/60 shadow-[0_0_20px_rgba(30,50,70,0.2)]'
-                : 'border-gold-dim/30 shadow-2xl'
+                ? 'border-cyan-950/80 shadow-[0_0_25px_rgba(30,50,70,0.25)]'
+                : 'border-gold-dim/40 shadow-2xl'
             }
         `}>
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 lg:px-16 scroll-smooth">
@@ -1148,22 +1207,26 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                 <div className="max-w-4xl mx-auto p-6 md:p-8">
                    {gameState.currentTurn?.suggestedActions && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-                         {gameState.currentTurn.suggestedActions.map((action, idx) => (
-                            <button 
-                              key={idx} 
-                              onClick={() => { audioSystem.playLowButton(); onAction(action); }} 
-                              disabled={isLoading} 
-                              className="text-left px-4 py-3.5 bg-void/90 border border-gold-dim/40 hover:border-gold hover:bg-gold/5 text-parchment hover:text-bone transition-all duration-200 rounded-lg shadow-sm group flex items-start justify-between gap-3"
-                            >
-                               <div className="flex items-start gap-2.5">
-                                  <span className="text-gold-dim group-hover:text-gold mt-1 text-sm font-mono transition-colors">➤</span>
-                                  <span className="font-serif italic text-base md:text-lg leading-snug">{action}</span>
-                               </div>
-                               <span className="text-[10px] font-mono font-bold text-zinc-500 group-hover:text-gold border border-zinc-700 group-hover:border-gold/50 px-1.5 py-0.5 rounded shrink-0 transition-colors">
-                                  [{idx + 1}]
-                               </span>
-                            </button>
-                         ))}
+                         {gameState.currentTurn.suggestedActions.map((action, idx) => {
+                            const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+                            const roman = romanNumerals[idx] || String(idx + 1);
+                            return (
+                              <button 
+                                key={idx} 
+                                onClick={() => { audioSystem.playLowButton(); onAction(action); }} 
+                                disabled={isLoading} 
+                                className="choice-decree text-left px-4 py-3.5 rounded-xl group flex items-start justify-between gap-3 cursor-pointer"
+                              >
+                                 <div className="flex items-start gap-3">
+                                    <span className="text-gold-dim group-hover:text-gold mt-0.5 text-sm font-serif font-bold transition-colors">❖</span>
+                                    <span className="font-serif italic text-base md:text-lg leading-snug text-parchment group-hover:text-bone">{action}</span>
+                                 </div>
+                                 <span className="text-[10px] font-display font-bold text-gold-dim/80 group-hover:text-gold border border-gold-dim/30 group-hover:border-gold bg-black/60 px-2 py-0.5 rounded shrink-0 transition-colors shadow-sm">
+                                    {roman}
+                                 </span>
+                              </button>
+                            );
+                         })}
                       </div>
                    )}
                    <form onSubmit={handleSendCustom} className="relative">
@@ -1177,29 +1240,29 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
         {/* RIGHT COLUMN: Tabbed Panel (Inventory, NPCs, Codex) */}
         <aside className={`
-           flex-col bg-panel/90 backdrop-blur-sm border border-gold-dim/30 z-20 shadow-xl overflow-hidden rounded-2xl
+           flex-col gothic-panel z-20 overflow-hidden rounded-2xl
            ${mobileTab === 'inventory' ? 'flex absolute top-0 left-4 right-4 bottom-24 z-40' : 'hidden'}
            lg:flex lg:static lg:w-72 xl:w-80 lg:inset-auto lg:h-auto
         `}>
            <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
               
               {/* TAB SELECTOR HEADER */}
-              <div className="flex border-b border-gold-dim/20 mb-5 bg-void/40 rounded-xl p-1 gap-1">
+              <div className="flex mb-5 bg-black/60 rounded-xl p-1 gap-1 border border-gold-dim/25 shadow-inner">
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('inventory'); }}
-                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'inventory' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'inventory' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
                  >
                    Bolsillos ({currentInventoryCount})
                  </button>
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('npcs'); }}
-                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all relative ${rightTab === 'npcs' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all relative ${rightTab === 'npcs' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
                  >
-                   Personas {gameState.npcs && gameState.npcs.length > 0 && <span className="ml-1 text-[9px] px-1.5 py-0.2 rounded-full bg-gold/20 text-gold">{gameState.npcs.length}</span>}
+                   Personas {gameState.npcs && gameState.npcs.length > 0 && <span className="ml-1 text-[9px] px-1.5 py-0.2 rounded-full bg-gold/20 text-gold font-bold">{gameState.npcs.length}</span>}
                  </button>
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('codex'); }}
-                   className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'codex' ? 'bg-panel text-gold border border-gold-dim/40 shadow-sm' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'codex' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
                  >
                    Códice
                  </button>
@@ -1227,18 +1290,34 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                              const isLocked = waitingForDismiss || diceRolling;
                              return (
                                 <li key={i} className={`relative ${isLocked ? 'cursor-not-allowed opacity-50 grayscale' : ''}`} onClick={() => handleItemClick(item.name)}>
-                                   <div className={`flex flex-col gap-1 transition-all group cursor-pointer p-2 rounded-lg border ${isSource ? 'border-gold bg-gold/10' : ''} ${isSelected ? 'border-gold-dim bg-white/5' : 'border-transparent hover:bg-white/5'} ${combineSource && !isSource ? 'animate-pulse hover:border-gold cursor-copy' : ''}`}>
-                                     <div className="flex items-start gap-2">
-                                       <span className="text-gold-dim mt-1.5 text-[8px] group-hover:text-gold transition-colors">◆</span>
-                                       <span className={`text-lg font-serif leading-tight ${isSelected || isSource ? 'text-bone' : 'text-parchment'}`}>{item.name}</span>
+                                   <div className={`relic-card flex flex-col gap-1.5 p-3 rounded-xl border transition-all group cursor-pointer ${isSource ? 'border-gold bg-gold/15 shadow-[0_0_15px_rgba(197,160,89,0.3)]' : ''} ${isSelected ? 'border-gold bg-white/10 shadow-md ring-1 ring-gold/40' : 'border-gold-dim/20 hover:border-gold-dim/60'} ${combineSource && !isSource ? 'animate-pulse hover:border-gold cursor-copy' : ''}`}>
+                                     <div className="flex items-start justify-between gap-2">
+                                       <div className="flex items-start gap-2">
+                                          <span className="text-gold mt-1 text-[10px] group-hover:scale-125 transition-transform">◆</span>
+                                          <span className={`text-base md:text-lg font-serif font-bold leading-tight ${isSelected || isSource ? 'text-bone' : 'text-parchment group-hover:text-bone'}`}>{item.name}</span>
+                                       </div>
                                      </div>
                                      {item.tags && item.tags.length > 0 && (
-                                       <div className="flex flex-wrap gap-1 ml-4 mt-1">
-                                         {item.tags.map((tag, tIdx) => (
-                                            <span key={tIdx} className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-zinc-700 text-zinc-300 bg-zinc-900/80">
-                                              {tag}
-                                            </span>
-                                         ))}
+                                       <div className="flex flex-wrap gap-1.5 ml-4 mt-0.5">
+                                         {item.tags.map((tag, tIdx) => {
+                                            const lower = tag.toLowerCase();
+                                            const isWorn = lower.includes('mella') || lower.includes('desgasta') || lower.includes('oxida') || lower.includes('vaci');
+                                            const isSharp = lower.includes('afila') || lower.includes('arma') || lower.includes('letal');
+                                            const isMystic = lower.includes('mág') || lower.includes('reliquia') || lower.includes('encanta');
+                                            return (
+                                              <span 
+                                                key={tIdx} 
+                                                className={`text-[9px] uppercase font-display tracking-widest px-2 py-0.5 rounded border font-bold ${
+                                                  isWorn ? 'border-amber-700/60 text-amber-300 bg-amber-950/40' :
+                                                  isSharp ? 'border-blood/60 text-blood-bright bg-blood/25' :
+                                                  isMystic ? 'border-purple-500/60 text-purple-300 bg-purple-950/40' :
+                                                  'border-zinc-700 text-zinc-300 bg-black/60'
+                                                }`}
+                                              >
+                                                {tag}
+                                              </span>
+                                            );
+                                         })}
                                        </div>
                                      )}
                                    </div>

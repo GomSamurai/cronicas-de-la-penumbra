@@ -233,7 +233,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
         {/* Left Column: Identity (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-panel border border-panel-border rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden group">
+          <div className="gothic-panel rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-dim to-transparent opacity-50"></div>
             
             {/* Mode Switcher */}
@@ -317,7 +317,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
         <div className="lg:col-span-5 flex flex-col gap-6">
           
           {/* Attributes Card */}
-          <div className="bg-panel border border-panel-border rounded-2xl p-8 shadow-2xl relative flex-1">
+          <div className="gothic-panel rounded-2xl p-8 shadow-2xl relative flex-1">
              <div className="flex justify-between items-center mb-8 pb-4 border-b border-gold-dim/20">
               <h2 className="text-xl font-display text-bone">Atributos</h2>
               <div className="text-right">
