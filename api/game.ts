@@ -322,6 +322,130 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    if (type === 'generateCharacterAi') {
+      const { mode, currentName, currentArchetype, currentBio } = payload || {};
+
+      if (mode === 'full') {
+        const fullPrompt = `
+Eres el Oráculo de la Penumbra, un ente cósmico de baja fantasía oscura, realismo sucio y terror victoriano gótico.
+Crea un personaje completamente original, perturbador y memorable para un mortal que se adentra en la niebla.
+
+Requisitos estrictos:
+1. 'name': Nombre y apellido victoriano decadente con o sin apodo gótico entre comillas (ej: 'Vespera Cross', 'Cassian "El Mudo" Graves', 'Dorian Nacht').
+2. 'archetype': Oficio siniestro, condena u origen turbio en 2-4 palabras (ej: 'Boticario de Venenos Prohibidos', 'Inquisidor Excomulgado', 'Ladrón de Sudarios', 'Taxidermista Clandestino').
+3. 'bio': Confesión en primera persona ("Yo..."). Un pecado atroz, cobardía, pacto oscuro o tragedia punzante, cruda y poética (1-2 frases).
+4. 'icon': Uno de estos sigilos exactos: "⚡", "🩸", "🥀", "⚰️", "🗡️", "⚔️", "🪓", "🏹", "🛡️", "📜", "👑", "👁️", "🧵", "🎭", "💀", "🕯️", "🐺", "🗝️", "🔮", "🧪", "🦅", "🕷️", "🔥", "⛓️".
+5. 'attributes': Reparto coherente de 12 puntos sobre base 10 (la suma de (valor - 10) para los 6 atributos DEBE SER EXACTAMENTE 12). Ningún atributo puede ser menor a 8 ni mayor a 17.
+
+Devuelve únicamente el JSON con esta estructura.
+        `;
+
+        const response = await ai.models.generateContent({
+          model: activeModel,
+          contents: fullPrompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                archetype: { type: Type.STRING },
+                bio: { type: Type.STRING },
+                icon: { type: Type.STRING },
+                attributes: {
+                  type: Type.OBJECT,
+                  properties: {
+                    fuerza: { type: Type.INTEGER },
+                    destreza: { type: Type.INTEGER },
+                    constitucion: { type: Type.INTEGER },
+                    inteligencia: { type: Type.INTEGER },
+                    sabiduria: { type: Type.INTEGER },
+                    carisma: { type: Type.INTEGER }
+                  },
+                  required: ["fuerza", "destreza", "constitucion", "inteligencia", "sabiduria", "carisma"]
+                }
+              },
+              required: ["name", "archetype", "bio", "icon", "attributes"]
+            }
+          }
+        });
+
+        const text = response.text;
+        if (!text) throw new Error("No response from AI");
+        return res.status(200).json({ data: JSON.parse(text) });
+      }
+
+      if (mode === 'name') {
+        const namePrompt = `
+Eres el Oráculo de la Penumbra.
+Genera UN ÚNICO nombre completo victoriano/gótico decadente y siniestro para un personaje${currentArchetype ? ` cuyo oficio o condena es "${currentArchetype}"` : ''}.
+Puede incluir un apodo lúgubre entre comillas (ej: 'Silas "El Enterrador" Vane', 'Beatrice Thorne', 'Malachi "Dientes de Plomo" Grimm').
+Devuelve JSON: { "name": "..." }
+        `;
+        const response = await ai.models.generateContent({
+          model: activeModel,
+          contents: namePrompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: { name: { type: Type.STRING } },
+              required: ["name"]
+            }
+          }
+        });
+        const text = response.text;
+        return res.status(200).json({ data: JSON.parse(text || '{"name":"Silas Graves"}') });
+      }
+
+      if (mode === 'archetype') {
+        const archPrompt = `
+Eres el Oráculo de la Penumbra.
+Genera UN oficio, condena o rol oscuro y evocador de baja fantasía victoriana gótica (máximo 4 palabras).
+Ejemplos: "Boticario de Venenos Clandestinos", "Inquisidor Ciego", "Ladrón de Sudarios", "Fabricante de Muñecas de Cera".
+Y elige uno de estos sigilos afines: ⚡, 🩸, 🥀, ⚰️, 🗡️, ⚔️, 🪓, 🏹, 🛡️, 📜, 👑, 👁️, 🧵, 🎭, 💀, 🕯️, 🐺, 🗝️, 🔮, 🧪, 🦅, 🕷️, 🔥, ⛓️.
+Devuelve JSON: { "archetype": "...", "icon": "..." }
+        `;
+        const response = await ai.models.generateContent({
+          model: activeModel,
+          contents: archPrompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: { archetype: { type: Type.STRING }, icon: { type: Type.STRING } },
+              required: ["archetype", "icon"]
+            }
+          }
+        });
+        const text = response.text;
+        return res.status(200).json({ data: JSON.parse(text || '{"archetype":"Ladrón de Criptas","icon":"⚰️"}') });
+      }
+
+      if (mode === 'sin') {
+        const sinPrompt = `
+Eres el Oráculo de la Penumbra.
+Escribe una confesión íntima y siniestra en primera persona ("Yo...") de 1 a 2 frases contundentes para un personaje${currentName ? ` llamado "${currentName}"` : ''}${currentArchetype ? ` cuyo origen es "${currentArchetype}"` : ''}.
+Debe ser un pecado real, una cobardía desgarradora, una profanación o un crimen atroz que cometió en el pasado y que aún lo atormenta. Prosa poética, fría y visceral.
+Devuelve JSON: { "bio": "..." }
+        `;
+        const response = await ai.models.generateContent({
+          model: activeModel,
+          contents: sinPrompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: { bio: { type: Type.STRING } },
+              required: ["bio"]
+            }
+          }
+        });
+        const text = response.text;
+        return res.status(200).json({ data: JSON.parse(text || '{"bio":"Quemé el barco con la tripulación infectada dentro; sus gritos aún me despiertan."}') });
+      }
+    }
+
     if (type === 'startAdventure') {
       const character = payload as Character;
       const prompt = `

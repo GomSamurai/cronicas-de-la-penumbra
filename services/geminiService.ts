@@ -168,3 +168,52 @@ export const nextTurn = async (
   }
   throw new Error("Tiempo de espera agotado tras varios reintentos con el éter");
 };
+
+export interface CharacterAiResponse {
+  name?: string;
+  archetype?: string;
+  bio?: string;
+  icon?: string;
+  attributes?: {
+    fuerza: number;
+    destreza: number;
+    constitucion: number;
+    inteligencia: number;
+    sabiduria: number;
+    carisma: number;
+  };
+}
+
+export const generateCharacterAi = async (payload: {
+  mode: 'full' | 'name' | 'archetype' | 'sin';
+  currentName?: string;
+  currentArchetype?: string;
+  currentBio?: string;
+}): Promise<CharacterAiResponse> => {
+  const customApiKey = getCustomApiKey();
+  const model = getSelectedModel();
+
+  const response = await fetch('/api/game', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'generateCharacterAi',
+      payload,
+      customApiKey: customApiKey || undefined,
+      model
+    }),
+  });
+
+  if (!response.ok) {
+    let errMsg = response.statusText;
+    try {
+      const errData = await response.json();
+      if (errData.error) errMsg = errData.error;
+    } catch (e) {}
+    throw new Error(errMsg);
+  }
+
+  const result = await response.json();
+  if (result.error) throw new Error(result.error);
+  return result.data;
+};

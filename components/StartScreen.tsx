@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Character, CharacterAttributes } from '../types';
 import AudioController from './AudioController';
 import { audioSystem } from '../services/audioService';
+import { generateCharacterAi } from '../services/geminiService';
+import { 
+  generateProceduralName, 
+  generateProceduralArchetype, 
+  generateProceduralSin 
+} from '../services/proceduralGenerator';
 
 interface StartScreenProps {
   onStart: (character: Character) => void;
@@ -205,6 +211,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
   // Saved Characters Library
   const [savedCharacters, setSavedCharacters] = useState<SavedCharacter[]>([]);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
+  const [aiLoadingField, setAiLoadingField] = useState<'full' | 'name' | 'archetype' | 'sin' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load saved characters on mount
@@ -283,17 +290,132 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
     }
   };
 
-  // Quick Randomizers for Tabula Rasa
-  const handleRandomName = () => {
+  // Procedural and AI Generators for Tabula Rasa
+  const handleProceduralName = () => {
     audioSystem.playClick();
-    const rName = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
-    setName(rName);
+    setName(generateProceduralName());
   };
 
-  const handleRandomSin = () => {
+  const handleAiName = async () => {
     audioSystem.playClick();
-    const rSin = TRAGIC_SINS[Math.floor(Math.random() * TRAGIC_SINS.length)];
-    setBio(rSin);
+    setAiLoadingField('name');
+    try {
+      const res = await generateCharacterAi({
+        mode: 'name',
+        currentArchetype: customArchetype.trim() || undefined
+      });
+      if (res.name) {
+        audioSystem.playSuccess();
+        setName(res.name);
+      }
+    } catch (e: any) {
+      console.warn("Fallo al generar nombre con IA, usando procedural:", e);
+      setName(generateProceduralName());
+      setSaveBanner("Conexión con el Éter inestable. Generado por combinatoria arcana.");
+      setTimeout(() => setSaveBanner(null), 3000);
+    } finally {
+      setAiLoadingField(null);
+    }
+  };
+
+  const handleProceduralArchetype = () => {
+    audioSystem.playClick();
+    setCustomArchetype(generateProceduralArchetype());
+  };
+
+  const handleAiArchetype = async () => {
+    audioSystem.playClick();
+    setAiLoadingField('archetype');
+    try {
+      const res = await generateCharacterAi({
+        mode: 'archetype'
+      });
+      if (res.archetype) {
+        audioSystem.playSuccess();
+        setCustomArchetype(res.archetype);
+        if (res.icon) setCustomIcon(res.icon);
+      }
+    } catch (e: any) {
+      console.warn("Fallo al generar oficio con IA, usando procedural:", e);
+      setCustomArchetype(generateProceduralArchetype());
+      setSaveBanner("Conexión con el Éter inestable. Generado por combinatoria arcana.");
+      setTimeout(() => setSaveBanner(null), 3000);
+    } finally {
+      setAiLoadingField(null);
+    }
+  };
+
+  const handleProceduralSin = () => {
+    audioSystem.playClick();
+    setBio(generateProceduralSin(name, customArchetype));
+  };
+
+  const handleAiSin = async () => {
+    audioSystem.playClick();
+    setAiLoadingField('sin');
+    try {
+      const res = await generateCharacterAi({
+        mode: 'sin',
+        currentName: name.trim() || undefined,
+        currentArchetype: customArchetype.trim() || undefined
+      });
+      if (res.bio) {
+        audioSystem.playSuccess();
+        setBio(res.bio);
+      }
+    } catch (e: any) {
+      console.warn("Fallo al generar pecado con IA, usando procedural:", e);
+      setBio(generateProceduralSin(name, customArchetype));
+      setSaveBanner("Conexión con el Éter inestable. Generado por combinatoria arcana.");
+      setTimeout(() => setSaveBanner(null), 3000);
+    } finally {
+      setAiLoadingField(null);
+    }
+  };
+
+  const handleFullAiCharacter = async () => {
+    audioSystem.playClick();
+    setAiLoadingField('full');
+    try {
+      const res = await generateCharacterAi({ mode: 'full' });
+      if (res.name && res.archetype && res.bio) {
+        audioSystem.playSuccess();
+        setName(res.name);
+        setCustomArchetype(res.archetype);
+        setBio(res.bio);
+        if (res.icon) setCustomIcon(res.icon);
+
+        if (res.attributes) {
+          const newStats: CharacterAttributes = {
+            fuerza: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.fuerza || 10)),
+            destreza: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.destreza || 10)),
+            constitucion: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.constitucion || 10)),
+            inteligencia: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.inteligencia || 10)),
+            sabiduria: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.sabiduria || 10)),
+            carisma: Math.max(MIN_ATTRIBUTE, Math.min(MAX_ATTRIBUTE_CUSTOM, res.attributes.carisma || 10)),
+          };
+          setAttributes(newStats);
+          recalculatePoints(newStats);
+        }
+
+        setSaveBanner(`¡${res.name} ha sido forjado por el Oráculo de la Penumbra!`);
+        setTimeout(() => setSaveBanner(null), 4000);
+      }
+    } catch (e: any) {
+      console.warn("Fallo en Oráculo IA, usando generación procedimental completa:", e);
+      const pName = generateProceduralName();
+      const pArch = generateProceduralArchetype();
+      const pSin = generateProceduralSin(pName, pArch);
+      setName(pName);
+      setCustomArchetype(pArch);
+      setBio(pSin);
+      handleRandomDistribution();
+      handleRandomSigil();
+      setSaveBanner("El Éter susurró una combinación arcana procedente de las sombras.");
+      setTimeout(() => setSaveBanner(null), 3500);
+    } finally {
+      setAiLoadingField(null);
+    }
   };
 
   const handleRandomSigil = () => {
@@ -724,27 +846,81 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
               <div className="gothic-panel rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"></div>
                 
-                <div className="flex items-center justify-between mb-4 border-b border-gold-dim/20 pb-2">
-                  <span className="text-xs uppercase font-display tracking-[0.2em] text-gold font-bold">
-                    Forja de Identidad desde la Ceniza
-                  </span>
-                  <span className="text-xs font-mono text-stone-300 font-semibold px-2 py-0.5 rounded bg-black/50 border border-gold-dim/30">
-                    Tabula Rasa
-                  </span>
+                <div className="flex items-center justify-between mb-3 border-b border-gold-dim/20 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase font-display tracking-[0.2em] text-gold font-bold">
+                      Forja de Identidad
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-400 font-semibold px-1.5 py-0.5 rounded bg-black/50 border border-gold-dim/30 hidden sm:inline">
+                      Tabula Rasa
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleFullAiCharacter}
+                    disabled={aiLoadingField !== null}
+                    className="text-xs px-3 py-1 rounded-lg border border-amber-500/60 bg-gradient-to-r from-amber-950/80 via-black/90 to-amber-950/80 text-amber-200 hover:text-white hover:border-gold hover:shadow-[0_0_12px_rgba(245,158,11,0.5)] transition-all font-display font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="El Oráculo de IA forja el personaje completo: nombre, rol, confesión siniestra, sigilo y atributos"
+                  >
+                    {aiLoadingField === 'full' ? (
+                      <>
+                        <span className="animate-spin text-amber-400 text-xs">✦</span>
+                        <span className="animate-pulse">Canalizando Alma...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-amber-400">✨</span>
+                        <span>Forjar Todo con IA</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 <div className="space-y-3.5">
                   {/* Archetype / Role Input */}
                   <div>
-                    <label className="block text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold mb-1.5">
-                      Origen y Condena (Rol del Personaje)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold">
+                        Origen y Condena (Rol del Personaje)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handleProceduralArchetype}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-black/40 border border-gold-dim/20 hover:border-gold-dim/50"
+                          title="Generar rol procedural aleatorio"
+                        >
+                          <span>🎲</span>
+                          <span>Azar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAiArchetype}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-amber-300 hover:text-amber-100 uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 hover:shadow-[0_0_8px_rgba(245,158,11,0.3)] disabled:opacity-50"
+                          title="Inspirar rol oscuro con IA"
+                        >
+                          {aiLoadingField === 'archetype' ? (
+                            <>
+                              <span className="animate-spin text-xs">✦</span>
+                              <span className="animate-pulse">Invocando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>✨</span>
+                              <span>Rol IA</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                     <input 
                       type="text"
                       value={customArchetype}
                       onChange={(e) => setCustomArchetype(e.target.value)}
                       maxLength={45}
-                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 md:p-3 text-sm md:text-base text-bone font-serif focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner"
+                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 text-sm md:text-base text-bone font-serif focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner"
                       placeholder="Ej: Inquisidor Renegado, Boticario, Mendigo Ciego..."
                     />
                     {/* Quick suggestion pills */}
@@ -809,47 +985,91 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
                     </div>
                   </div>
 
-                  {/* Name Input with Randomizer */}
+                  {/* Name Input with Randomizer & AI */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold">
                         Nombre del Desdichado
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleRandomName}
-                        className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                        title="Generar nombre aleatorio"
-                      >
-                        <span>🎲</span>
-                        <span>Susurrar Nombre</span>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handleProceduralName}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-black/40 border border-gold-dim/20 hover:border-gold-dim/50"
+                          title="Generar nombre victoriano/gótico procedimental"
+                        >
+                          <span>🎲</span>
+                          <span>Azar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAiName}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-amber-300 hover:text-amber-100 uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 hover:shadow-[0_0_8px_rgba(245,158,11,0.3)] disabled:opacity-50"
+                          title="Susurrar nombre con IA adaptado a tu rol"
+                        >
+                          {aiLoadingField === 'name' ? (
+                            <>
+                              <span className="animate-spin text-xs">✦</span>
+                              <span className="animate-pulse">Susurrando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>✨</span>
+                              <span>Nombre IA</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <input 
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       maxLength={35}
-                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 md:p-3 text-sm md:text-base text-bone font-display font-semibold focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner tracking-wide"
+                      className="w-full bg-black/60 border border-gold-dim/30 rounded-xl p-2.5 text-sm md:text-base text-bone font-display font-semibold focus:border-gold focus:outline-none placeholder-zinc-500 transition-all shadow-inner tracking-wide"
                       placeholder="Ej: Morvath Graves, Silas, Rowena..."
                     />
                   </div>
 
-                  {/* Past Sin / Tragedy Textarea with Randomizer */}
+                  {/* Past Sin / Tragedy Textarea with Randomizer & AI */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-amber-200/90 text-xs uppercase tracking-widest font-display font-bold">
                         La Sombra del Pasado (Pecado o Tragedia Inicial)
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleRandomSin}
-                        className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                        title="Generar pecado trágico aleatorio"
-                      >
-                        <span>🎲</span>
-                        <span>Inspiración Siniestra</span>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handleProceduralSin}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-gold-dim hover:text-gold uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-black/40 border border-gold-dim/20 hover:border-gold-dim/50"
+                          title="Generar pecado trágico procedimental"
+                        >
+                          <span>🎲</span>
+                          <span>Azar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAiSin}
+                          disabled={aiLoadingField !== null}
+                          className="text-xs text-amber-300 hover:text-amber-100 uppercase tracking-wider font-display font-semibold flex items-center gap-1 transition-colors cursor-pointer px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 hover:shadow-[0_0_8px_rgba(245,158,11,0.3)] disabled:opacity-50"
+                          title="Redactar confesión siniestra con IA conectada a tu nombre y rol"
+                        >
+                          {aiLoadingField === 'sin' ? (
+                            <>
+                              <span className="animate-spin text-xs">✦</span>
+                              <span className="animate-pulse">Confesando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>✨</span>
+                              <span>Pecado IA</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <textarea 
                       value={bio}
