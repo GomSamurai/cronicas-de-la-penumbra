@@ -159,8 +159,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 text-zinc-600 text-[10px] tracking-widest uppercase font-display">
-        Memento Mori • Ver. 0.5
+      <div className="absolute bottom-6 text-zinc-600 text-[10px] tracking-widest uppercase font-display flex items-center gap-2">
+        <span>Crónicas de la Penumbra</span>
+        <span className="text-zinc-800">•</span>
+        <span>Forja de Almas</span>
+        <span className="text-zinc-800">•</span>
+        <span className="text-gold-dim">Ver. 4.0</span>
       </div>
 
       {/* Modals */}
@@ -178,97 +182,228 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
 
             {activeModal === 'manual' && (
               <div className="space-y-8">
-                <h2 className="text-4xl font-display text-bone border-b border-gold-dim/30 pb-4">Manual de la Vigilia</h2>
+                <div className="border-b border-gold-dim/30 pb-4 flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="text-3xl md:text-4xl font-display text-bone">Manual de la Vigilia</h2>
+                  <span className="text-xs uppercase tracking-widest text-gold font-mono px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                    Reglamento • Ver. 4.0
+                  </span>
+                </div>
                 
-                {/* 
-                   IMPORTANT: Container text-lg sets the baseline for everything inside.
-                   Sub-sections now inherit this size instead of being text-sm.
-                */}
-                <div className="space-y-8 text-lg font-serif leading-relaxed text-parchment-dim text-justify">
-                  <p>
-                    <strong className="text-gold">La Premisa:</strong> No eres un héroe elegido. Eres un superviviente en un mundo en decadencia. Tus acciones tienen peso, y el entorno reacciona de forma orgánica a ellas. No hay rutas predefinidas; la historia se escribe mientras la vives.
-                  </p>
+                <div className="space-y-8 text-base md:text-lg font-serif leading-relaxed text-parchment-dim text-justify">
+                  {/* I. La Premisa */}
+                  <div className="bg-black/30 p-4 rounded-xl border border-gold-dim/20">
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>I. La Premisa y el Mundo</span>
+                    </h3>
+                    <p>
+                      No eres un héroe predestinado ni posees favores divinos. Eres un superviviente arrojado a un mundo en decadencia, donde la magia es peligrosa, la entropía no perdona y la muerte es permanente. Cada frase se forja en tiempo real en respuesta a tus elecciones; no existen rutas pregrabadas ni finales de cartón piedra.
+                    </p>
+                  </div>
 
-                  {/* Sección Atributos */}
+                  {/* II. Forja de Identidad */}
                   <div>
-                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-4 border-b border-gold-dim/10 pb-1">Tus Facultades</h3>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                        <li><span className="text-bone font-bold">Fuerza:</span> Capacidad de carga y potencia física.</li>
-                        <li><span className="text-bone font-bold">Destreza:</span> Sigilo, manipulación fina y esquiva.</li>
-                        <li><span className="text-bone font-bold">Constitución:</span> Resistencia al dolor y enfermedades.</li>
-                        <li><span className="text-bone font-bold">Inteligencia:</span> Conocimiento arcano, historia y lógica.</li>
-                        <li><span className="text-bone font-bold">Sabiduría:</span> Percepción, medicina e intuición.</li>
-                        <li><span className="text-bone font-bold">Carisma:</span> Persuasión, engaño y voluntad.</li>
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-3 border-b border-gold-dim/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>II. Forja de Identidad: Destinos y Tabula Rasa</span>
+                    </h3>
+                    <div className="space-y-3 text-sm md:text-base">
+                      <p>
+                        <strong className="text-bone">Destinos Escritos:</strong> Arquetipos clásicos de la penumbra (Inquisidor Renegado, Médica de Plaga, Saqueador...) listos para jugar, con estadísticas ajustadas y trasfondos preestablecidos.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Tabula Rasa (Forja Libre):</strong> Diseña tu propia alma desde la ceniza. Dispones de <span className="text-gold font-mono">12 puntos rúnicos</span> para repartir libremente sobre una base de 10 en cada atributo (máximo inicial 17).
+                      </p>
+                      <p>
+                        <strong className="text-gold-dim">Generación Dual (Azar e IA):</strong> Cada campo (Nombre, Rol y Pecado) cuenta con un botón <span className="text-bone">🎲 Azar</span> (motor combinatorio procedimental con más de 50.000 combinaciones victorianas) y un botón <span className="text-amber-300">✨ IA</span> para canalizar al Oráculo de Gemini. El botón maestro <span className="text-gold">✨ Forjar Todo con IA</span> genera la identidad, el sigilo, la confesión y los atributos de una sola vez.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Grimorio de Almas:</strong> Puedes almacenar tus personajes preferidos en el Grimorio local, exportarlos en archivos <span className="font-mono text-zinc-300">.json</span> o importarlos en cualquier momento.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* III. Facultades y Azar D20 */}
+                  <div>
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-3 border-b border-gold-dim/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>III. Tus Facultades y el Ritual del D20</span>
+                    </h3>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2.5 mb-4 text-sm md:text-base">
+                      <li><span className="text-bone font-bold">Fuerza:</span> Potencia muscular, derribo de puertas y capacidad de carga.</li>
+                      <li><span className="text-bone font-bold">Destreza:</span> Sigilo, evasión, ganzúas finas y reflejos rápidos.</li>
+                      <li><span className="text-bone font-bold">Constitución:</span> Resistencia física, vitalidad y tolerancia a venenos.</li>
+                      <li><span className="text-bone font-bold">Inteligencia:</span> Ocultismo, historia, investigación analítica y deducción.</li>
+                      <li><span className="text-bone font-bold">Sabiduría:</span> Percepción sensorial, medicina, supervivencia e intuición.</li>
+                      <li><span className="text-bone font-bold">Carisma:</span> Presencia, engaño cortesano, intimidación y persuasión.</li>
                     </ul>
-                  </div>
 
-                  {/* Sección Azar */}
-                  <div>
-                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-4 border-b border-gold-dim/10 pb-1">El Ritual de Azar</h3>
-                    <p className="mb-4">
-                       Cuando intentas una acción cuyo éxito es incierto, el destino exige un tributo. El sistema utiliza un dado de 20 caras (D20).
+                    <p className="mb-3 text-sm md:text-base">
+                      Cuando el desenlace de un acto no es seguro, el destino exige una tirada de D20:
                     </p>
-                    <div className="bg-void/40 p-4 rounded border border-gold-dim/20 text-center font-mono text-base md:text-lg mb-4">
-                       Resultado = D20 + Atributo Base vs Dificultad (DC)
+                    <div className="bg-void/50 p-3.5 rounded-xl border border-gold-dim/30 text-center font-mono text-sm md:text-base mb-3 shadow-inner">
+                      Tirada = <span className="text-gold font-bold">D20</span> + <span className="text-bone">Modificador de Atributo</span> vs <span className="text-amber-200">Dificultad (DC)</span>
                     </div>
-                    <p className="text-parchment-dim italic">
-                       Un <span className="text-gold">20 natural</span> es un Éxito Crítico. Un <span className="text-blood-bright">1 natural</span> es una Pifia (Fallo Catastrófico).
+                    <p className="text-xs md:text-sm text-parchment-dim italic text-center">
+                      Un <span className="text-gold font-bold">20 natural</span> desata un Éxito Crítico. Un <span className="text-blood-bright font-bold">1 natural</span> precipita una Pifia Catastrófica.
                     </p>
                   </div>
 
-                  {/* Sección Inventario y Entropía */}
+                  {/* IV. Flujo de la Crónica y Controles */}
                   <div>
-                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-4 border-b border-gold-dim/10 pb-1">Inventario y Entropía</h3>
-                    <p className="mb-4">
-                       Tus bolsillos no son infinitos. Tu capacidad de carga es <span className="text-bone">6 huecos + (Fuerza / 2)</span>. Si te sobrecargas, el agotamiento será inminente.
-                    </p>
-                    <p className="mb-4">
-                       <strong className="text-parchment">Combinación:</strong> Puedes combinar objetos desde el inspector. Selecciona "Combinar" en un objeto y luego pulsa sobre otro compatible (ej: Tela + Alcohol = Venda o Molotov, según tu intención).
-                    </p>
-                    <p className="italic">
-                       <strong className="text-gold-dim">Entropía:</strong> Los objetos se desgastan. Una espada se mella, una antorcha se apaga. Presta atención a las etiquetas (tags) de tus objetos.
-                    </p>
-                  </div>
-
-                  {/* Sección Consecuencias (Traumas y Fobias) */}
-                  <div>
-                    <h3 className="text-blood-bright font-display text-sm uppercase tracking-widest mb-4 border-b border-blood/20 pb-1">Cuerpo y Mente</h3>
-                    <div className="space-y-4">
-                       <div>
-                          <span className="text-blood-bright font-bold uppercase text-sm tracking-wider block mb-1">Vitalidad (HP)</span>
-                          <p>Si llega a 0, mueres. Si baja del 30%, puedes sufrir <span className="text-blood-bright">Traumas</span> (heridas persistentes que penalizan tus atributos).</p>
-                       </div>
-                       <div>
-                          <span className="text-sanity font-bold uppercase text-sm tracking-wider block mb-1">Cordura</span>
-                          <p>Si desciende demasiado, empezarás a alucinar (el texto se distorsionará). Por debajo del 50%, puedes desarrollar <span className="text-sanity">Fobias</span> o psicosis que reaccionarán a ciertos estímulos de la narración.</p>
-                       </div>
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-3 border-b border-gold-dim/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>IV. Crónica, Decisiones y Acción Libre</span>
+                    </h3>
+                    <div className="space-y-3 text-sm md:text-base">
+                      <p>
+                        <strong className="text-bone">Opciones Rápidas:</strong> En cada encrucijada se sugieren 4 caminos tácticos. Puedes seleccionarlos con el ratón o con las teclas numéricas <span className="font-mono text-gold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/30">[1]</span>, <span className="font-mono text-gold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/30">[2]</span>, <span className="font-mono text-gold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/30">[3]</span> y <span className="font-mono text-gold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/30">[4]</span>.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Acción Libre:</strong> No estás limitado a las 4 sugerencias. Utiliza el campo de texto para escribir cualquier ocurrencia, táctica inusual o diálogo personalizado; el Game Master evaluará su lógica y consecuencias.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Velocidad de Lectura:</strong> Puedes alternar entre <span className="text-gold-dim font-semibold">1x</span>, <span className="text-gold-dim font-semibold">2x</span> y <span className="text-gold-dim font-semibold">Directo</span>. Pulsar <span className="font-mono text-stone-300 px-1.5 py-0.5 rounded bg-black/60 border border-zinc-700">Espacio</span> o <span className="font-mono text-stone-300 px-1.5 py-0.5 rounded bg-black/60 border border-zinc-700">Enter</span> revela el pasaje de forma inmediata.
+                      </p>
                     </div>
                   </div>
 
+                  {/* V. Tensión, Cartografía y PNJs */}
+                  <div>
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-3 border-b border-gold-dim/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>V. Tensión Adaptativa, Entorno y Alianzas</span>
+                    </h3>
+                    <div className="space-y-3 text-sm md:text-base">
+                      <p>
+                        <strong className="text-bone">Escala de Tensión:</strong> El sistema evalúa el peligro en seis grados (<span className="text-emerald-400">Calma</span>, <span className="text-blue-300">Sospecha</span>, <span className="text-amber-400">Tensión</span>, <span className="text-orange-500">Peligro</span>, <span className="text-red-500">Combate</span>, <span className="text-purple-400">Agónico</span>), modulando las viñetas visuales y activando sintetizadores, tambores de guerra o silencios angustiosos.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Dramatis Personae:</strong> En la pestaña de personajes podrás consultar a los supervivientes y criaturas conocidas, su estado vital, su afinidad contigo e interactuar directamente mediante acciones contextuales.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Cartografía y Rutas:</strong> Observa la luminosidad y nivel de amenaza de tu posición actual. Las salidas detectadas son interactivas: basta con pulsar sobre ellas para intentar el desplazamiento.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* VI. Inventario y Entropía */}
+                  <div>
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-3 border-b border-gold-dim/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>VI. Inventario, Artesanía y Entropía</span>
+                    </h3>
+                    <div className="space-y-2.5 text-sm md:text-base">
+                      <p>
+                        Tu capacidad de carga está limitada a <span className="text-bone font-bold">6 huecos + (Fuerza / 2)</span>. Cargar en exceso acarreará penalizaciones severas de agotamiento.
+                      </p>
+                      <p>
+                        <strong className="text-bone">Combinación:</strong> En el inspector de objetos puedes pulsar "Combinar" sobre un elemento y seleccionar otro compatible para improvisar soluciones (antorchas, emplastos, ganzúas rústicas o cócteles inflamables).
+                      </p>
+                      <p className="italic text-parchment-dim">
+                        <strong className="text-gold-dim">Entropía:</strong> Los recursos son efímeros. Las armas sufren muescas, el fuego consume las teas y los venenos pierden potencia. Vigila las propiedades y etiquetas de tu equipo.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* VII. Vitalidad, Traumas y Sanidad */}
+                  <div>
+                    <h3 className="text-blood-bright font-display text-sm uppercase tracking-widest mb-3 border-b border-blood/20 pb-1 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>VII. Cuerpo y Mente (Traumas y Fobias)</span>
+                    </h3>
+                    <div className="space-y-3 text-sm md:text-base">
+                      <div>
+                        <span className="text-blood-bright font-bold uppercase text-sm tracking-wider block mb-0.5">Vitalidad (HP)</span>
+                        <p>Si tus puntos de golpe caen a 0, tu vigilia concluye de forma definitiva. Al descender del 30%, te expones a <span className="text-blood-bright font-semibold">Traumas físicos</span> permanentes que reducen tus facultades.</p>
+                      </div>
+                      <div>
+                        <span className="text-sanity font-bold uppercase text-sm tracking-wider block mb-0.5">Cordura</span>
+                        <p>Los horrores quebrantan el juicio. Una cordura mermada distorsiona la tipografía y los relatos del narrador. Por debajo del 50%, tu personaje puede contraer <span className="text-sanity font-semibold">Fobias</span> reactivas que disparan pánico ante ciertos estímulos.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* VIII. Persistencia y Panteón */}
+                  <div className="bg-black/40 p-4 rounded-xl border border-white/5">
+                    <h3 className="text-gold font-display text-sm uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <span>✦</span>
+                      <span>VIII. Persistencia, Respaldo y el Panteón</span>
+                    </h3>
+                    <p className="text-sm md:text-base mb-2">
+                      La crónica se guarda automáticamente en cada turno en el almacenamiento local. Puedes utilizar el botón <strong className="text-bone">Descargar Crónica</strong> para obtener un archivo <span className="font-mono text-gold-dim">.json</span> y continuar tu periplo en cualquier equipo mediante <strong className="text-bone">Cargar Destino</strong>.
+                    </p>
+                    <p className="text-sm md:text-base text-stone-300 italic">
+                      Aquellos que perecen no desaparecen: sus nombres, oficios, turnos sobrevividos y últimas palabras quedan tallados en el <strong className="text-blood-bright">Panteón</strong> de la pantalla inicial.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
             {activeModal === 'about' && (
               <div className="space-y-6">
-                 <h2 className="text-3xl font-display text-bone border-b border-gold-dim/30 pb-4">El Proyecto</h2>
-                 <p className="text-lg font-serif leading-relaxed text-parchment-dim">
-                   Crónicas de la Penumbra es un experimento narrativo impulsado por inteligencia artificial generativa de última generación.
-                 </p>
-                 <p className="text-lg font-serif leading-relaxed text-parchment-dim">
-                   A diferencia de los librojuegos tradicionales con ramas predefinidas, aquí cada frase se escribe en tiempo real basándose en tus acciones y en la coherencia de un mundo oscuro y decadente. Ninguna partida es igual a otra.
-                 </p>
-                 <div className="bg-void/50 p-4 rounded border border-gold-dim/30 mt-4">
-                    <p className="text-xs uppercase tracking-widest text-gold mb-2">Tecnología</p>
-                    <ul className="text-sm text-zinc-500 space-y-1">
-                       <li>Motor Narrativo: Gemini 2.5 Flash</li>
-                       <li>Audio Procedural: Web Audio API</li>
-                       <li>Interfaz: React + Tailwind</li>
-                    </ul>
-                 </div>
-                 <p className="text-sm italic text-zinc-600 mt-8">
-                   "Aquel que mira largo tiempo al abismo, ve cómo el abismo mira dentro de él."
-                 </p>
+                <div className="border-b border-gold-dim/30 pb-4 flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="text-3xl font-display text-bone">El Proyecto</h2>
+                  <span className="text-xs uppercase tracking-widest text-gold font-mono px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                    Crónicas de la Penumbra • Ver. 4.0
+                  </span>
+                </div>
+
+                <div className="space-y-4 text-base md:text-lg font-serif leading-relaxed text-parchment-dim text-justify">
+                  <p>
+                    <strong className="text-gold font-display tracking-wide uppercase text-sm block mb-1">Manifiesto y Filosofía</strong>
+                    <strong className="text-bone">Crónicas de la Penumbra</strong> es un experimento vanguardista de ficción interactiva gótica y rol de supervivencia. Fusiona la densidad literaria del horror oscuro (*Grimdark* y *Baja Fantasía*) con la capacidad generativa de modelos de Inteligencia Artificial de última hornada.
+                  </p>
+                  <p>
+                    A diferencia de los librojuegos convencionales gobernados por árboles de decisión rígidos, aquí no hay caminos predefinidos: un Game Master neuronal analiza tu ajuar, tus heridas, tu cordura y el entorno para tejer una narración reactiva, visceral y literaria en riguroso tiempo real.
+                  </p>
+                </div>
+
+                <div className="bg-void/60 p-5 rounded-2xl border border-gold-dim/30 space-y-4 shadow-inner">
+                  <p className="text-xs uppercase tracking-widest text-gold font-display font-bold flex items-center gap-2">
+                    <span>✦</span>
+                    <span>Arquitectura y Stack Tecnológico (v4.0)</span>
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs md:text-sm">
+                    <div className="bg-black/50 p-3 rounded-xl border border-gold-dim/15">
+                      <span className="text-bone font-bold block mb-1 font-display uppercase tracking-wider">Motor Narrativo</span>
+                      <span className="text-stone-300">Google Gemini 2.5 Flash / 3.8 Flash con ventana de contexto multiturno continua, control de tensión dramática y balanceo d20.</span>
+                    </div>
+
+                    <div className="bg-black/50 p-3 rounded-xl border border-gold-dim/15">
+                      <span className="text-bone font-bold block mb-1 font-display uppercase tracking-wider">Audio Procedural</span>
+                      <span className="text-stone-300">Sintetizador Web Audio API puro en tiempo real: drones abisales, piano, coros, percusión de combate y filtro de choque agónico.</span>
+                    </div>
+
+                    <div className="bg-black/50 p-3 rounded-xl border border-gold-dim/15">
+                      <span className="text-bone font-bold block mb-1 font-display uppercase tracking-wider">Forja de Almas</span>
+                      <span className="text-stone-300">Generador procedimental combinatorio infinito (+50.000 variantes) asistido por IA para nombres, trasfondos y atributos.</span>
+                    </div>
+
+                    <div className="bg-black/50 p-3 rounded-xl border border-gold-dim/15">
+                      <span className="text-bone font-bold block mb-1 font-display uppercase tracking-wider">Interfaz y Accesibilidad</span>
+                      <span className="text-stone-300">React 19 + TypeScript sobre Vite, escalador tipográfico dinámico independiente (UI y Crónica) y atajos de teclado completos.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5 text-xs text-zinc-400 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="uppercase tracking-widest text-zinc-500 font-display">Desarrollo y Co-creación:</span>
+                    <span className="text-stone-300 font-serif italic">GomSamurai & Antigravity (Google DeepMind)</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="uppercase tracking-widest text-zinc-500 font-display">Almacenamiento y Privacidad:</span>
+                    <span className="text-stone-300 font-serif italic">100% Local (LocalStorage + BYOK opcional)</span>
+                  </div>
+                </div>
+
+                <p className="text-sm italic text-zinc-500 text-center pt-2">
+                  "Aquel que mira largo tiempo al abismo, ve cómo el abismo mira dentro de él."
+                  <span className="block text-xs text-zinc-600 mt-1 uppercase tracking-widest font-display">— Friedrich Nietzsche</span>
+                </p>
               </div>
             )}
 
