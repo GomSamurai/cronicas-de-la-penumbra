@@ -6,6 +6,12 @@ import { exportStoryToPDF } from '../services/exportService';
 import AudioController from './AudioController';
 import SettingsModal, { getVisualEffectsSetting } from './SettingsModal';
 import AtlasModal from './AtlasModal';
+import { 
+  getNarrativeTextSize, 
+  cycleNarrativeTextSize, 
+  onTypographyChange, 
+  NarrativeTextSize 
+} from '../services/typographyService';
 
 interface GameScreenProps {
   gameState: GameState;
@@ -35,6 +41,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const [showExitModal, setShowExitModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [visualEffectsEnabled, setVisualEffectsEnabled] = useState(getVisualEffectsSetting());
+  const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>(getNarrativeTextSize);
   const [showDiceLog, setShowDiceLog] = useState(false);
   const [showAtlasModal, setShowAtlasModal] = useState(false);
   const [whisperIdx, setWhisperIdx] = useState(0);
@@ -87,6 +94,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
   // Game Over State
   const isDead = gameState.hp <= 0;
+
+  // Listen for typography scale updates
+  useEffect(() => {
+    return onTypographyChange(({ narrativeSize: newSize }) => {
+      setNarrativeSize(newSize);
+    });
+  }, []);
 
   useEffect(() => {
     audioSystem.setMode('game');
@@ -752,13 +766,44 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
            )}
         </div>
         
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-2.5 md:gap-4">
+           {/* Quick Typography Scale Control */}
+           <div className="flex items-center bg-black/60 border border-gold-dim/40 rounded-lg p-0.5 shadow-inner" title="Tamaño de lectura de la Crónica">
+             <button
+               type="button"
+               onClick={() => {
+                 audioSystem.playClick();
+                 cycleNarrativeTextSize('down');
+               }}
+               disabled={narrativeSize === 'normal'}
+               className="px-1.5 py-0.5 text-xs text-parchment-dim hover:text-gold disabled:opacity-25 disabled:cursor-not-allowed font-serif font-bold transition-colors cursor-pointer"
+               title="Reducir tamaño del texto narrativo"
+             >
+               A⁻
+             </button>
+             <span className="text-[10px] font-mono font-bold text-gold px-1 select-none">
+               {narrativeSize === 'normal' ? '1x' : narrativeSize === 'large' ? '1.2x' : '1.4x'}
+             </span>
+             <button
+               type="button"
+               onClick={() => {
+                 audioSystem.playClick();
+                 cycleNarrativeTextSize('up');
+               }}
+               disabled={narrativeSize === 'huge'}
+               className="px-1.5 py-0.5 text-xs text-parchment-dim hover:text-gold disabled:opacity-25 disabled:cursor-not-allowed font-serif font-bold transition-colors cursor-pointer"
+               title="Aumentar tamaño del texto narrativo"
+             >
+               A⁺
+             </button>
+           </div>
+
            <AudioController variant="header" />
            
            {/* Settings Button */}
            <button 
              onClick={() => setShowSettingsModal(true)} 
-             className="flex items-center gap-1 text-parchment hover:text-gold transition-colors uppercase text-xs tracking-[0.2em] font-bold" 
+             className="flex items-center gap-1 text-parchment hover:text-gold transition-colors uppercase text-xs tracking-[0.2em] font-bold cursor-pointer" 
              title="Ajustes de la Vigilia"
            >
               <span className="text-sm">⚙️</span>

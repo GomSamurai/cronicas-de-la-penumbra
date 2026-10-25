@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { getCustomApiKey, getSelectedModel, testConnection } from '../services/geminiService';
 import { audioSystem } from '../services/audioService';
+import { 
+  getNarrativeTextSize, 
+  setNarrativeTextSize, 
+  getUiScale, 
+  setUiScale, 
+  NARRATIVE_SIZES, 
+  UI_SCALES, 
+  NarrativeTextSize, 
+  UiScale 
+} from '../services/typographyService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,6 +31,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [showKey, setShowKey] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [visualEffects, setVisualEffects] = useState(true);
+  const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>('normal');
+  const [uiScale, setLocalUiScale] = useState<UiScale>('normal');
   
   // Audio state
   const [volume, setVolume] = useState(1.0);
@@ -37,6 +49,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       setApiKey(getCustomApiKey());
       setSelectedModel(getSelectedModel());
       setVisualEffects(getVisualEffectsSetting());
+      setNarrativeSize(getNarrativeTextSize());
+      setLocalUiScale(getUiScale());
       setVolume(audioSystem.getMasterVolume());
       setIsMuted(audioSystem.isMuted());
       setIsReactive(audioSystem.isReactive());
@@ -57,6 +71,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       }
       localStorage.setItem('penumbra_selected_model', selectedModel);
       localStorage.setItem('penumbra_visual_effects', String(visualEffects));
+      setNarrativeTextSize(narrativeSize);
+      setUiScale(uiScale);
     } catch (e) {
       console.error("Error al guardar ajustes:", e);
     }
@@ -66,6 +82,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       setSaveSuccess(false);
       onClose();
     }, 800);
+  };
+
+  const handleSelectNarrativeSize = (size: NarrativeTextSize) => {
+    audioSystem.playClick();
+    setNarrativeSize(size);
+    setNarrativeTextSize(size);
+  };
+
+  const handleSelectUiScale = (scale: UiScale) => {
+    audioSystem.playClick();
+    setLocalUiScale(scale);
+    setUiScale(scale);
   };
 
   const handleTestKey = async () => {
@@ -360,6 +388,101 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               <span className="text-xs font-mono text-gold-dim w-8 text-right">
                 {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
               </span>
+            </div>
+          </div>
+
+          {/* SECCIÓN 5: ACCESIBILIDAD Y TIPOGRAFÍA */}
+          <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-4">
+            <div>
+              <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
+                Accesibilidad y Tipografía
+              </label>
+              <p className="text-xs text-parchment-dim mt-0.5">
+                Calibra el tamaño de los textos y la proporción de la interfaz para una lectura descansada y nítida.
+              </p>
+            </div>
+
+            {/* Subsección 1: Tamaño de Lectura de la Crónica */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                  <span>📖</span>
+                  <span>Texto Narrativo (Crónica y Pasajes)</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  {NARRATIVE_SIZES[narrativeSize].label} ({NARRATIVE_SIZES[narrativeSize].badge})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(NARRATIVE_SIZES) as NarrativeTextSize[]).map((key) => {
+                  const item = NARRATIVE_SIZES[key];
+                  const isSelected = narrativeSize === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectNarrativeSize(key)}
+                      className={`text-center py-2 px-2.5 rounded border transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
+                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
+                      }`}
+                    >
+                      <div className="text-xs font-display font-bold">{item.label}</div>
+                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Vista Previa en Vivo */}
+              <div className="bg-black/50 border border-gold-dim/30 rounded-lg p-3 text-parchment font-serif italic transition-all duration-300">
+                <span className="text-[9px] uppercase tracking-widest font-display text-gold-dim block mb-1 font-bold not-italic">
+                  Muestra en tiempo real:
+                </span>
+                <p style={{ fontSize: NARRATIVE_SIZES[narrativeSize].sampleFontSize, lineHeight: '1.6' }} className="text-stone-200">
+                  "El eco de tus pasos despierta a las sombras dormidas en las criptas. Un susurro helado recorre el aire..."
+                </p>
+              </div>
+            </div>
+
+            {/* Subsección 2: Escala General de la Interfaz */}
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                  <span>🖥️</span>
+                  <span>Escala Global de Interfaz (Zoom UI)</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  {UI_SCALES[uiScale].label}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(UI_SCALES) as UiScale[]).map((key) => {
+                  const item = UI_SCALES[key];
+                  const isSelected = uiScale === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectUiScale(key)}
+                      className={`text-center py-2 px-2.5 rounded border transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
+                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
+                      }`}
+                    >
+                      <div className="text-xs font-display font-bold">{item.label}</div>
+                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-zinc-500 font-serif italic">
+                Ajusta proporcionalmente los botones, fichas, paneles y textos secundarios en toda la aplicación.
+              </p>
             </div>
           </div>
 

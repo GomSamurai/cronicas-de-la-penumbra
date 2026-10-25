@@ -5,6 +5,7 @@ import GameScreen from './components/GameScreen';
 import HomeScreen from './components/HomeScreen';
 import * as geminiService from './services/geminiService';
 import { audioSystem } from './services/audioService';
+import './services/typographyService';
 
 const INITIAL_HP = 20;
 const INITIAL_SANITY = 100;

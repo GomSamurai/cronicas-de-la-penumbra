@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { audioSystem } from '../services/audioService';
+import { 
+  getNarrativeTextSize, 
+  setNarrativeTextSize, 
+  onTypographyChange, 
+  NARRATIVE_SIZES, 
+  NarrativeTextSize 
+} from '../services/typographyService';
 
 export type ReadingSpeed = 'normal' | 'fast' | 'instant';
 
@@ -24,6 +31,14 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
       return 'normal';
     }
   });
+
+  const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>(getNarrativeTextSize);
+
+  useEffect(() => {
+    return onTypographyChange(({ narrativeSize: newSize }) => {
+      setNarrativeSize(newSize);
+    });
+  }, []);
 
   const [displayedLength, setDisplayedLength] = useState(() => (isLast && speedMode !== 'instant' ? 0 : text.length));
   const [isTyping, setIsTyping] = useState(() => isLast && speedMode !== 'instant');
@@ -124,38 +139,68 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
 
   return (
     <div className="relative group/typewriter">
-      {/* READING SPEED & SKIP CONTROLS BAR (Only visible on the active/last passage) */}
+      {/* READING SPEED & TYPOGRAPHY CONTROLS BAR (Only visible on the active/last passage) */}
       {isLast && (
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gold-dim/15 text-[10px] uppercase font-display tracking-widest text-parchment-dim select-none">
-          <div className="flex items-center gap-1.5">
-            <span className="text-gold-dim">⚡ Lectura:</span>
-            <button
-              onClick={() => handleSetSpeed('normal')}
-              className={`px-2 py-0.5 rounded transition-all ${speedMode === 'normal' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-              title="Velocidad habitual de la pluma"
-            >
-              1x
-            </button>
-            <button
-              onClick={() => handleSetSpeed('fast')}
-              className={`px-2 py-0.5 rounded transition-all ${speedMode === 'fast' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-              title="Velocidad rápida"
-            >
-              2x
-            </button>
-            <button
-              onClick={() => handleSetSpeed('instant')}
-              className={`px-2 py-0.5 rounded transition-all ${speedMode === 'instant' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-              title="Texto revelado inmediatamente"
-            >
-              Directo
-            </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-2 border-b border-gold-dim/15 text-[10px] uppercase font-display tracking-widest text-parchment-dim select-none">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Speed Controls */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-gold-dim">⚡ Lectura:</span>
+              <button
+                onClick={() => handleSetSpeed('normal')}
+                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'normal' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
+                title="Velocidad habitual de la pluma"
+              >
+                1x
+              </button>
+              <button
+                onClick={() => handleSetSpeed('fast')}
+                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'fast' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
+                title="Velocidad rápida"
+              >
+                2x
+              </button>
+              <button
+                onClick={() => handleSetSpeed('instant')}
+                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'instant' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
+                title="Texto revelado inmediatamente"
+              >
+                Directo
+              </button>
+            </div>
+
+            {/* Quick Typography Size Toggle */}
+            <div className="flex items-center gap-1 border-l border-gold-dim/30 pl-3">
+              <span className="text-gold-dim">🔤 Letra:</span>
+              {(['normal', 'large', 'huge'] as NarrativeTextSize[]).map((sizeKey) => {
+                const isAct = narrativeSize === sizeKey;
+                const cfg = NARRATIVE_SIZES[sizeKey];
+                return (
+                  <button
+                    key={sizeKey}
+                    type="button"
+                    onClick={() => {
+                      audioSystem.playClick();
+                      setNarrativeTextSize(sizeKey);
+                    }}
+                    className={`px-2 py-0.5 rounded transition-all text-xs font-serif cursor-pointer ${
+                      isAct 
+                        ? 'bg-gold/25 text-gold font-bold border border-gold shadow-[0_0_8px_rgba(197,160,89,0.3)]' 
+                        : 'hover:text-parchment hover:bg-white/5 text-zinc-400 border border-transparent'
+                    }`}
+                    title={`Tamaño de letra: ${cfg.label} (${cfg.badge})`}
+                  >
+                    {sizeKey === 'normal' ? 'A' : sizeKey === 'large' ? 'A+' : 'A++'}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {isTyping && (
             <button
               onClick={handleSkip}
-              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-void/80 hover:bg-gold/15 border border-gold-dim/40 hover:border-gold text-gold transition-all animate-pulse shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-void/80 hover:bg-gold/15 border border-gold-dim/40 hover:border-gold text-gold transition-all animate-pulse shadow-sm cursor-pointer"
               title="Saltar animación (Espacio o Enter)"
             >
               <span>Revelar todo</span>
@@ -183,7 +228,14 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
           const parts = safeParagraph.split(/(\*\*.*?\*\*)/g);
 
           return (
-            <p key={idx} className={`mb-6 text-xl leading-relaxed text-parchment font-serif tracking-wide text-justify ${dropCapClass}`}>
+            <p 
+              key={idx} 
+              className={`mb-6 text-parchment font-serif tracking-wide text-justify transition-all duration-300 ${dropCapClass}`}
+              style={{
+                fontSize: 'var(--penumbra-narrative-size, 1.25rem)',
+                lineHeight: 'var(--penumbra-narrative-line-height, 1.75)'
+              }}
+            >
               {parts.map((part, i) => {
                 if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
                   return <strong key={i} className="text-bone font-bold drop-shadow-sm">{part.slice(2, -2)}</strong>;
