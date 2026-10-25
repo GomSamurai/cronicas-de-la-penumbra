@@ -1240,7 +1240,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onBack, isLoading })
 
               {savedCharacters.length === 0 ? (
                 <div className="py-12 text-center">
-                  <div className="text-4xl mb-3 text-zinc-600">📜</div>
+                  <div className="text-4xl mb-3 text-gold-dim">📜</div>
                   <h3 className="text-lg font-display text-bone mb-1.5">El Grimorio está vacío</h3>
                   <p className="text-xs font-serif italic text-stone-300 max-w-md mx-auto mb-4">
                     Aún no has sellado a ningún vástago personalizado. Ve a la pestaña de Tabula Rasa para forjar un personaje con su sigilo y guardarlo aquí.

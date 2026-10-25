@@ -139,19 +139,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
           </button>
           <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
 
-          <div className="flex flex-wrap gap-3 justify-center items-center mt-4">
-             <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Manual</button>
-             <span className="text-zinc-800">•</span>
-             <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-zinc-600 hover:text-gold transition-colors">Proyecto</button>
-             <span className="text-zinc-800">•</span>
-             <button onClick={(e) => { e.stopPropagation(); setActiveModal('settings'); }} className="text-xs uppercase tracking-widest text-gold-dim hover:text-gold transition-colors flex items-center gap-1 font-bold">
+          <div className="flex flex-wrap gap-3 justify-center items-center mt-5">
+             <button onClick={(e) => { e.stopPropagation(); setActiveModal('manual'); }} className="text-xs uppercase tracking-widest text-parchment-dim hover:text-gold transition-colors font-display font-medium">Manual</button>
+             <span className="text-gold-dim/40">•</span>
+             <button onClick={(e) => { e.stopPropagation(); setActiveModal('about'); }} className="text-xs uppercase tracking-widest text-parchment-dim hover:text-gold transition-colors font-display font-medium">Proyecto</button>
+             <span className="text-gold-dim/40">•</span>
+             <button onClick={(e) => { e.stopPropagation(); setActiveModal('settings'); }} className="text-xs uppercase tracking-widest text-gold hover:text-amber-200 transition-colors flex items-center gap-1 font-display font-bold">
                <span>⚙️</span>
                <span>Ajustes</span>
              </button>
              {graveyardData.length > 0 && (
                 <>
-                  <span className="text-zinc-800">•</span>
-                  <button onClick={(e) => { e.stopPropagation(); setActiveModal('graveyard'); }} className="text-xs uppercase tracking-widest text-blood-bright hover:text-red-400 transition-colors">Panteón</button>
+                  <span className="text-gold-dim/40">•</span>
+                  <button onClick={(e) => { e.stopPropagation(); setActiveModal('graveyard'); }} className="text-xs uppercase tracking-widest text-blood-bright hover:text-red-400 transition-colors font-display font-medium">Panteón</button>
                 </>
              )}
           </div>
@@ -159,12 +159,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 text-zinc-600 text-[10px] tracking-widest uppercase font-display flex items-center gap-2">
+      <div className="absolute bottom-6 text-parchment-dim/75 text-xs tracking-widest uppercase font-display flex items-center gap-2">
         <span>Crónicas de la Penumbra</span>
-        <span className="text-zinc-800">•</span>
+        <span className="text-gold-dim/50">•</span>
         <span>Forja de Almas</span>
-        <span className="text-zinc-800">•</span>
-        <span className="text-gold-dim">Ver. 4.0</span>
+        <span className="text-gold-dim/50">•</span>
+        <span className="text-gold font-semibold">Ver. 4.0</span>
       </div>
 
       {/* Modals */}
@@ -400,9 +400,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
                   </div>
                 </div>
 
-                <p className="text-sm italic text-zinc-500 text-center pt-2">
+                <p className="text-sm italic text-parchment text-center pt-2">
                   "Aquel que mira largo tiempo al abismo, ve cómo el abismo mira dentro de él."
-                  <span className="block text-xs text-zinc-600 mt-1 uppercase tracking-widest font-display">— Friedrich Nietzsche</span>
+                  <span className="block text-xs text-gold-dim mt-1 uppercase tracking-widest font-display font-semibold">— Friedrich Nietzsche</span>
                 </p>
               </div>
             )}
@@ -431,9 +431,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNewGame, onLoadGame, onResume
 
                 {graveyardData.length === 0 ? (
                    <div className="py-12 text-center">
-                      <div className="text-4xl text-zinc-700 mb-3">⚰️</div>
+                      <div className="text-4xl text-gold-dim mb-3">⚰️</div>
                       <p className="text-parchment-dim italic">El panteón yace en silencio. Ninguna lápida ha sido alzada aún.</p>
-                      <p className="text-xs text-zinc-600 mt-2">Los ecos de futuros fracasos resonarán aquí.</p>
+                      <p className="text-xs text-parchment-dim/80 mt-2">Los ecos de futuros fracasos resonarán aquí.</p>
                    </div>
                 ) : (
                    <div className="space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">

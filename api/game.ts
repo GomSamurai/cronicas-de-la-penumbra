@@ -14,11 +14,35 @@ function getAi(customApiKey?: string) {
 }
 
 function resolveModel(modelName?: string) {
-  const ALLOWED_MODELS = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-2.5-pro'];
+  const ALLOWED_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
   if (modelName && ALLOWED_MODELS.includes(modelName)) {
     return modelName;
   }
-  return 'gemini-2.5-flash';
+  return 'gemini-3.8-flash';
+}
+
+async function generateWithModelFallback(
+  ai: GoogleGenAI,
+  preferredModel: string,
+  params: { contents: any; config?: any }
+) {
+  try {
+    return await ai.models.generateContent({
+      model: preferredModel,
+      ...params
+    });
+  } catch (err: any) {
+    // Si el modelo 3.8 o 2.5-pro no responde o tiene saturación de cuota,
+    // recurrimos inmediatamente a gemini-2.5-flash como salvaguarda
+    if (preferredModel !== 'gemini-2.5-flash') {
+      console.warn(`[Fallback Oráculo] El modelo ${preferredModel} falló (${err?.message || 'indisponible'}), reintentando con gemini-2.5-flash...`);
+      return await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        ...params
+      });
+    }
+    throw err;
+  }
 }
 
 
@@ -311,8 +335,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ai = getAi(customApiKey);
 
     if (type === 'testConnection') {
-      const response = await ai.models.generateContent({
-        model: activeModel,
+      const response = await generateWithModelFallback(ai, activeModel, {
         contents: "Responde únicamente con: CONEXION_ESTABLECIDA",
       });
       return res.status(200).json({
@@ -340,8 +363,7 @@ Requisitos estrictos:
 Devuelve únicamente el JSON con esta estructura.
         `;
 
-        const response = await ai.models.generateContent({
-          model: activeModel,
+        const response = await generateWithModelFallback(ai, activeModel, {
           contents: fullPrompt,
           config: {
             responseMimeType: "application/json",
@@ -382,8 +404,7 @@ Genera UN ÚNICO nombre completo victoriano/gótico decadente y siniestro para u
 Puede incluir un apodo lúgubre entre comillas (ej: 'Silas "El Enterrador" Vane', 'Beatrice Thorne', 'Malachi "Dientes de Plomo" Grimm').
 Devuelve JSON: { "name": "..." }
         `;
-        const response = await ai.models.generateContent({
-          model: activeModel,
+        const response = await generateWithModelFallback(ai, activeModel, {
           contents: namePrompt,
           config: {
             responseMimeType: "application/json",
@@ -406,8 +427,7 @@ Ejemplos: "Boticario de Venenos Clandestinos", "Inquisidor Ciego", "Ladrón de S
 Y elige uno de estos sigilos afines: ⚡, 🩸, 🥀, ⚰️, 🗡️, ⚔️, 🪓, 🏹, 🛡️, 📜, 👑, 👁️, 🧵, 🎭, 💀, 🕯️, 🐺, 🗝️, 🔮, 🧪, 🦅, 🕷️, 🔥, ⛓️.
 Devuelve JSON: { "archetype": "...", "icon": "..." }
         `;
-        const response = await ai.models.generateContent({
-          model: activeModel,
+        const response = await generateWithModelFallback(ai, activeModel, {
           contents: archPrompt,
           config: {
             responseMimeType: "application/json",
@@ -429,8 +449,7 @@ Escribe una confesión íntima y siniestra en primera persona ("Yo...") de 1 a 2
 Debe ser un pecado real, una cobardía desgarradora, una profanación o un crimen atroz que cometió en el pasado y que aún lo atormenta. Prosa poética, fría y visceral.
 Devuelve JSON: { "bio": "..." }
         `;
-        const response = await ai.models.generateContent({
-          model: activeModel,
+        const response = await generateWithModelFallback(ai, activeModel, {
           contents: sinPrompt,
           config: {
             responseMimeType: "application/json",
@@ -469,8 +488,7 @@ OBJETIVOS DEL TURNO INICIAL (IN MEDIA RES):
 Genera el JSON siguiendo el esquema estricto.
       `;
 
-      const response = await ai.models.generateContent({
-        model: activeModel,
+      const response = await generateWithModelFallback(ai, activeModel, {
         contents: prompt,
         config: {
           systemInstruction: MASTER_SYSTEM_INSTRUCTION,
@@ -611,8 +629,7 @@ DIRECTIVAS PARA ESTE TURNO:
 Genera el JSON de respuesta.
       `;
 
-      const response = await ai.models.generateContent({
-        model: activeModel,
+      const response = await generateWithModelFallback(ai, activeModel, {
         contents: userPrompt,
         config: {
           systemInstruction: MASTER_SYSTEM_INSTRUCTION,

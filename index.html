@@ -27,17 +27,17 @@
         theme: {
           extend: {
             colors: {
-              'void': '#050505',          // Main background (darker than obsidian)
-              'panel': '#121212',         // Card/Panel background
-              'panel-border': '#2a2a2a',  // Subtle borders
-              'bone': '#e5e5e5',          // High contrast text
-              'parchment': '#d4c5a9',     // Normal reading text
-              'parchment-dim': '#948c7e', // Secondary text
-              'gold': '#c5a059',          // Accents/Highlights
-              'gold-dim': '#5c4d2e',      // Borders/Muted accents
-              'blood': '#8a1c1c',         // HP bars, deep elements
-              'blood-bright': '#ff5555',  // Text alerts (High contrast on dark)
-              'sanity': '#4b5c85',        // Sanity color
+              'void': 'var(--color-void, #050505)',
+              'panel': 'var(--color-panel, #121212)',
+              'panel-border': 'var(--color-panel-border, #2a2a2a)',
+              'bone': 'var(--color-bone, #f2ece1)',
+              'parchment': 'var(--color-parchment, #ded0ba)',
+              'parchment-dim': 'var(--color-parchment-dim, #a39886)',
+              'gold': 'var(--color-gold, #c5a059)',
+              'gold-dim': 'var(--color-gold-dim, #6b5832)',
+              'blood': 'var(--color-blood, #8a1c1c)',
+              'blood-bright': 'var(--color-blood-bright, #ff5555)',
+              'sanity': 'var(--color-sanity, #4b5c85)',
             },
             fontFamily: {
               serif: ['Cormorant Garamond', 'serif'],
@@ -84,9 +84,181 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap');
       
+      :root {
+        --color-void: #050505;
+        --color-panel: #121212;
+        --color-panel-border: #2a241b;
+        --color-bone: #f2ece1;
+        --color-parchment: #ded0ba;
+        --color-parchment-dim: #a39886;
+        --color-gold: #c5a059;
+        --color-gold-dim: #6b5832;
+        --color-blood: #8a1c1c;
+        --color-blood-bright: #ff5555;
+        --color-sanity: #4b5c85;
+      }
+      
       body {
-        background-color: #050505;
-        color: #d4c5a9;
+        background-color: var(--color-void);
+        color: var(--color-parchment);
+        transition: background-color 0.25s ease, color 0.25s ease;
+      }
+
+      /* Legibility & Contrast Enhancements Across Themes */
+      .theme-penumbra .text-zinc-600, .theme-penumbra .text-zinc-500, .theme-penumbra .text-stone-500 {
+        color: #a89e8c !important;
+      }
+      .theme-penumbra .text-zinc-400, .theme-penumbra .text-stone-400 {
+        color: #cec4b2 !important;
+      }
+      
+      .theme-crimson .text-zinc-600, .theme-crimson .text-zinc-500, .theme-crimson .text-stone-500 {
+        color: #bfa0a0 !important;
+      }
+      .theme-crimson .text-zinc-400, .theme-crimson .text-stone-400 {
+        color: #d6bebe !important;
+      }
+
+      .theme-emerald .text-zinc-600, .theme-emerald .text-zinc-500, .theme-emerald .text-stone-500 {
+        color: #92b9ac !important;
+      }
+      .theme-emerald .text-zinc-400, .theme-emerald .text-stone-400 {
+        color: #b7d6cb !important;
+      }
+
+      .theme-high-contrast .text-zinc-600, .theme-high-contrast .text-zinc-500, .theme-high-contrast .text-stone-500,
+      .theme-high-contrast .text-zinc-400, .theme-high-contrast .text-stone-400 {
+        color: #ffffff !important;
+      }
+
+      /* Monastic Codex / Light Parchment Mode */
+      .theme-parchment {
+        color-scheme: light;
+      }
+      .theme-parchment body {
+        background-color: #ece2d0 !important;
+        color: #241a10 !important;
+      }
+      .theme-parchment .text-bone {
+        color: #171109 !important;
+      }
+      .theme-parchment .text-parchment {
+        color: #2c2114 !important;
+      }
+      .theme-parchment .text-parchment-dim {
+        color: #554432 !important;
+      }
+      .theme-parchment .text-stone-200, .theme-parchment .text-stone-300 {
+        color: #2f2316 !important;
+      }
+      .theme-parchment .text-stone-400, .theme-parchment .text-stone-500, 
+      .theme-parchment .text-zinc-400, .theme-parchment .text-zinc-500, .theme-parchment .text-zinc-600 {
+        color: #5d4d3a !important;
+      }
+      .theme-parchment .text-amber-200, .theme-parchment .text-amber-200\/90, .theme-parchment .text-amber-100 {
+        color: #7d4d0e !important;
+      }
+      .theme-parchment .bg-black\/30,
+      .theme-parchment .bg-black\/40,
+      .theme-parchment .bg-black\/50,
+      .theme-parchment .bg-black\/60,
+      .theme-parchment .bg-black\/70,
+      .theme-parchment .bg-black\/80,
+      .theme-parchment .bg-black\/90,
+      .theme-parchment .bg-stone-950,
+      .theme-parchment .bg-stone-950\/80,
+      .theme-parchment .bg-stone-950\/90 {
+        background-color: rgba(228, 218, 201, 0.88) !important;
+        border-color: rgba(143, 92, 24, 0.35) !important;
+      }
+      .theme-parchment .bg-void,
+      .theme-parchment .bg-void\/30,
+      .theme-parchment .bg-void\/40,
+      .theme-parchment .bg-void\/50,
+      .theme-parchment .bg-void\/60 {
+        background-color: rgba(238, 230, 216, 0.95) !important;
+      }
+      .theme-parchment .gothic-panel {
+        background: linear-gradient(180deg, rgba(239, 232, 219, 0.98) 0%, rgba(226, 215, 196, 0.99) 100%) !important;
+        border-color: rgba(143, 92, 24, 0.4) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 30px rgba(80, 60, 40, 0.12) !important;
+      }
+      .theme-parchment .gothic-panel-inner {
+        background: radial-gradient(circle at 50% 0%, rgba(246, 240, 230, 0.9) 0%, rgba(228, 218, 201, 0.98) 100%) !important;
+      }
+      .theme-parchment .choice-decree {
+        background: linear-gradient(135deg, rgba(246, 239, 228, 0.98) 0%, rgba(234, 224, 209, 0.99) 100%) !important;
+        border-color: rgba(143, 92, 24, 0.38) !important;
+        color: #241a10 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 12px rgba(80, 60, 40, 0.08) !important;
+      }
+      .theme-parchment .choice-decree:hover {
+        background: linear-gradient(135deg, rgba(252, 247, 238, 1) 0%, rgba(240, 231, 217, 1) 100%) !important;
+        border-color: rgba(143, 92, 24, 0.75) !important;
+        box-shadow: 0 0 16px rgba(143, 92, 24, 0.22), 0 6px 18px rgba(80, 60, 40, 0.15) !important;
+      }
+      .theme-parchment .talisman-card {
+        background: linear-gradient(180deg, rgba(245, 238, 226, 0.95) 0%, rgba(230, 220, 203, 0.98) 100%) !important;
+        border-color: rgba(143, 92, 24, 0.35) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 3px 10px rgba(80, 60, 40, 0.08) !important;
+      }
+      .theme-parchment input[type="text"],
+      .theme-parchment input[type="password"],
+      .theme-parchment textarea {
+        background-color: rgba(248, 243, 234, 0.95) !important;
+        color: #1a130a !important;
+        border-color: rgba(143, 92, 24, 0.45) !important;
+      }
+      .theme-parchment input::placeholder,
+      .theme-parchment textarea::placeholder {
+        color: #7a6a57 !important;
+      }
+      .theme-parchment .bg-vignette {
+        background: radial-gradient(circle at center, transparent 40%, rgba(143, 92, 24, 0.05) 75%, rgba(120, 80, 30, 0.2) 100%) !important;
+      }
+      .theme-parchment .relic-card {
+        background: linear-gradient(180deg, rgba(244, 236, 224, 0.95) 0%, rgba(231, 222, 207, 0.98) 100%) !important;
+        border-color: rgba(143, 92, 24, 0.32) !important;
+      }
+      .theme-parchment .stat-bezel {
+        background: #dfd2ba !important;
+        border-color: rgba(143, 92, 24, 0.5) !important;
+      }
+      .theme-parchment .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(220, 208, 189, 0.7) !important;
+      }
+      .theme-parchment .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(143, 92, 24, 0.4) !important;
+      }
+
+      /* High Contrast Mode Overrides */
+      .theme-high-contrast .gothic-panel {
+        background: #0d0d0d !important;
+        border: 2px solid #ffd700 !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.2) !important;
+      }
+      .theme-high-contrast .choice-decree {
+        background: #141414 !important;
+        border: 2px solid #555555 !important;
+        color: #ffffff !important;
+      }
+      .theme-high-contrast .choice-decree:hover {
+        border-color: #ffd700 !important;
+        background: #202020 !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+      }
+      .theme-high-contrast input[type="text"],
+      .theme-high-contrast textarea {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border: 2px solid #ffd700 !important;
+      }
+      .theme-high-contrast .talisman-card {
+        background: #111111 !important;
+        border: 1px solid #777777 !important;
+      }
+      .theme-high-contrast .text-parchment-dim {
+        color: #dcdcdc !important;
       }
       
       /* Subtle noise texture */

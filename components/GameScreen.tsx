@@ -635,36 +635,36 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const getRelationshipBadge = (rel: string) => {
     switch (rel) {
       case 'aliado':
-        return { label: 'Aliado', bg: 'bg-gold/10 text-gold border-gold/40' };
+        return { label: 'Aliado', bg: 'bg-gold/15 text-gold border-gold/50' };
       case 'favorable':
-        return { label: 'Favorable', bg: 'bg-emerald-950/40 text-emerald-400 border-emerald-700/40' };
+        return { label: 'Favorable', bg: 'bg-emerald-950/50 text-emerald-300 border-emerald-600/50' };
       case 'neutral':
-        return { label: 'Neutral', bg: 'bg-zinc-900 text-zinc-400 border-zinc-700' };
+        return { label: 'Neutral', bg: 'bg-black/60 text-parchment-dim border-gold-dim/30' };
       case 'sospechoso':
-        return { label: 'Sospechoso', bg: 'bg-amber-950/40 text-amber-400 border-amber-700/40' };
+        return { label: 'Sospechoso', bg: 'bg-amber-950/50 text-amber-300 border-amber-600/50' };
       case 'hostil':
-        return { label: 'Hostil', bg: 'bg-blood/20 text-blood-bright border-blood/50' };
+        return { label: 'Hostil', bg: 'bg-blood/25 text-blood-bright border-blood/60' };
       case 'enemigo_mortal':
-        return { label: 'Enemigo Mortal', bg: 'bg-blood/30 text-blood-bright border-blood animate-pulse font-bold' };
+        return { label: 'Enemigo Mortal', bg: 'bg-blood/40 text-blood-bright border-blood animate-pulse font-bold' };
       default:
-        return { label: rel, bg: 'bg-zinc-900 text-zinc-400 border-zinc-700' };
+        return { label: rel, bg: 'bg-black/60 text-parchment-dim border-gold-dim/30' };
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'vivo':
-        return { label: 'Vívido', icon: '●', color: 'text-zinc-300' };
+        return { label: 'Vívido', icon: '●', color: 'text-emerald-400 font-semibold' };
       case 'herido':
-        return { label: 'Malherido', icon: '🩸', color: 'text-blood-bright' };
+        return { label: 'Malherido', icon: '🩸', color: 'text-blood-bright font-semibold' };
       case 'inconsciente':
-        return { label: 'Inconsciente', icon: '💤', color: 'text-amber-400' };
+        return { label: 'Inconsciente', icon: '💤', color: 'text-amber-400 font-semibold' };
       case 'muerto':
-        return { label: 'Cadáver', icon: '☠️', color: 'text-zinc-600 line-through' };
+        return { label: 'Cadáver', icon: '☠️', color: 'text-stone-400 line-through' };
       case 'desaparecido':
-        return { label: 'Desaparecido', icon: '🌫️', color: 'text-zinc-500 italic' };
+        return { label: 'Desaparecido', icon: '🌫️', color: 'text-stone-300 italic' };
       default:
-        return { label: status, icon: '•', color: 'text-zinc-400' };
+        return { label: status, icon: '•', color: 'text-stone-300' };
     }
   };
 
@@ -885,7 +885,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                            <span className="text-[11px] uppercase tracking-[0.2em] font-display font-bold text-parchment-dim group-hover:text-blood-bright transition-colors">Vitalidad</span>
                         </div>
                         <span className={`font-display font-bold text-sm px-2 py-0.5 rounded bg-black/50 border border-white/5 ${gameState.hp < 6 ? 'text-blood-bright border-blood/60 animate-pulse' : 'text-bone'}`}>
-                          {gameState.hp} <span className="text-xs text-zinc-500">/ {gameState.maxHp}</span>
+                          {gameState.hp} <span className="text-xs text-parchment-dim font-medium">/ {gameState.maxHp}</span>
                         </span>
                      </div>
                      <div className="stat-bezel h-3.5">
@@ -903,7 +903,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                            <span className="text-[11px] uppercase tracking-[0.2em] font-display font-bold text-parchment-dim group-hover:text-cyan-300 transition-colors">Cordura</span>
                         </div>
                         <span className="font-display font-bold text-sm px-2 py-0.5 rounded bg-black/50 border border-white/5 text-bone">
-                          {gameState.sanity}<span className="text-xs text-zinc-500">%</span>
+                          {gameState.sanity}<span className="text-xs text-parchment-dim font-medium">%</span>
                         </span>
                      </div>
                      <div className="stat-bezel h-3.5">
@@ -946,7 +946,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                 <div className="mb-8 animate-fade-in">
                    <h3 className="text-amber-500 text-xs uppercase tracking-[0.2em] mb-3 font-display font-bold border-b border-gold-dim/20 pb-2 flex items-center justify-between">
                      <span>Estados Tácticos</span>
-                     <span className="text-[10px] text-zinc-400 font-mono">({gameState.conditions.length})</span>
+                     <span className="text-xs text-gold-dim font-mono font-bold">({gameState.conditions.length})</span>
                    </h3>
                    <div className="space-y-2">
                       {gameState.conditions.map((cond) => {
@@ -971,7 +971,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between">
                                      <span className={`font-display font-bold uppercase tracking-wider ${style.text}`}>{cond.name}</span>
-                                     <span className="text-[9px] uppercase tracking-widest text-zinc-400 px-1.5 py-0.2 bg-black/40 rounded border border-white/5">{cond.severity}</span>
+                                     <span className="text-[10px] uppercase tracking-widest text-parchment-dim font-semibold px-2 py-0.5 bg-black/60 rounded border border-gold-dim/30">{cond.severity}</span>
                                   </div>
                                   <p className="text-[11px] text-parchment-dim mt-0.5 line-clamp-2 italic">{cond.description}</p>
                                </div>
@@ -1045,9 +1045,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                     
                     {/* Token tracking */}
                     {gameState.sessionTokens && (
-                      <div className="bg-black/40 border border-gold-dim/15 p-2.5 rounded-xl text-[10px] font-mono text-zinc-400 flex justify-between items-center">
-                         <span className="text-zinc-500 uppercase font-display text-[9px] tracking-wider">Caudal Éter:</span>
-                         <span className="text-gold-dim font-bold">{gameState.sessionTokens.totalTokens.toLocaleString()} tokens</span>
+                      <div className="bg-black/50 border border-gold-dim/25 p-2.5 rounded-xl text-xs font-mono text-parchment-dim flex justify-between items-center">
+                         <span className="text-gold uppercase font-display text-[10px] tracking-wider font-bold">Caudal Éter:</span>
+                         <span className="text-gold font-bold">{gameState.sessionTokens.totalTokens.toLocaleString()} tokens</span>
                       </div>
                     )}
                  </div>
@@ -1222,7 +1222,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                </div>
                             </div>
                             {resultInfo && <div className={`text-xl font-display font-bold tracking-[0.3em] mb-4 ${resultInfo.color}`}>{resultInfo.text}</div>}
-                            <p className="mt-4 text-[10px] text-zinc-500 uppercase tracking-widest animate-pulse">[ Click aquí para aceptar destino ]</p>
+                            <p className="mt-4 text-xs text-gold-dim uppercase tracking-widest animate-pulse font-display font-semibold">[ Click aquí para aceptar destino ]</p>
                          </div>
                       )}
                     </div>
@@ -1302,19 +1302,19 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
               <div className="flex mb-5 bg-black/60 rounded-xl p-1 gap-1 border border-gold-dim/25 shadow-inner">
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('inventory'); }}
-                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'inventory' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-xs uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'inventory' ? 'gothic-tab-active text-gold' : 'text-parchment-dim hover:text-bone'}`}
                  >
                    Bolsillos ({currentInventoryCount})
                  </button>
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('npcs'); }}
-                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all relative ${rightTab === 'npcs' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-xs uppercase font-display font-bold tracking-wider transition-all relative ${rightTab === 'npcs' ? 'gothic-tab-active text-gold' : 'text-parchment-dim hover:text-bone'}`}
                  >
                    Personas {gameState.npcs && gameState.npcs.length > 0 && <span className="ml-1 text-[9px] px-1.5 py-0.2 rounded-full bg-gold/20 text-gold font-bold">{gameState.npcs.length}</span>}
                  </button>
                  <button 
                    onClick={() => { audioSystem.playClick(); setRightTab('codex'); }}
-                   className={`flex-1 py-2 px-1.5 rounded-lg text-[10px] uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'codex' ? 'gothic-tab-active text-gold' : 'text-zinc-500 hover:text-parchment'}`}
+                   className={`flex-1 py-2 px-1.5 rounded-lg text-xs uppercase font-display font-bold tracking-wider transition-all ${rightTab === 'codex' ? 'gothic-tab-active text-gold' : 'text-parchment-dim hover:text-bone'}`}
                  >
                    Códice
                  </button>
@@ -1331,11 +1331,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                        <div className="mb-4 bg-gold/10 border border-gold p-2 text-center rounded animate-pulse">
                           <p className="text-xs text-gold font-bold uppercase tracking-widest mb-1">Modo Combinación</p>
                           <p className="text-xs text-parchment-dim">Selecciona el segundo objeto...</p>
-                          <button onClick={() => setCombineSource(null)} className="mt-2 text-[10px] underline text-zinc-500 hover:text-white">Cancelar</button>
+                          <button onClick={() => setCombineSource(null)} className="mt-2 text-xs underline text-parchment-dim hover:text-gold">Cancelar</button>
                        </div>
                     )}
                     <ul className="space-y-3">
-                       {gameState.inventory.length === 0 ? <li className="text-zinc-600 italic text-sm py-4 text-center">Bolsillos vacíos.</li> : 
+                       {gameState.inventory.length === 0 ? <li className="text-parchment-dim italic text-sm py-6 text-center bg-black/20 rounded-xl border border-gold-dim/15">Bolsillos vacíos.</li> : 
                           gameState.inventory.map((item: InventoryItem, i) => {
                              const isSelected = selectedItem === item.name;
                              const isSource = combineSource === item.name;
@@ -1390,7 +1390,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                        <span className="text-[10px] font-display font-bold tracking-widest text-parchment-dim">{(gameState.npcs || []).length} Registrados</span>
                     </div>
                     {(!gameState.npcs || gameState.npcs.length === 0) ? (
-                       <p className="text-zinc-600 italic text-sm py-8 text-center leading-relaxed">
+                       <p className="text-parchment-dim italic text-sm py-8 text-center leading-relaxed bg-black/20 rounded-xl border border-gold-dim/15 px-4">
                           Ningún rostro grabado en tu memoria. Las sombras caminan solas.
                        </p>
                     ) : (
@@ -1413,7 +1413,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                          {relBadge.label}
                                       </span>
                                    </div>
-                                   <div className="flex justify-between items-center text-[10px] text-zinc-400 mb-2">
+                                   <div className="flex justify-between items-center text-xs text-parchment-dim mb-2">
                                       <span className="italic font-serif">{npc.role}</span>
                                       <span className={`flex items-center gap-1 ${statusBadge.color}`}>
                                          <span>{statusBadge.icon}</span>
@@ -1421,7 +1421,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                       </span>
                                    </div>
                                    {npc.location && (
-                                      <div className="text-[9px] text-zinc-500 font-serif truncate">
+                                      <div className="text-[10px] text-parchment-dim font-serif truncate">
                                          📍 {npc.location}
                                       </div>
                                    )}
@@ -1443,10 +1443,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                          <div className="space-y-3">
                             {gameState.activeThreads.map((thread, i) => (
                                <div key={i} onClick={() => handleThreadClick(thread.id)} className={`bg-black/20 border transition-all duration-300 p-3 rounded-lg flex items-start gap-3 cursor-pointer group ${selectedThreadId === thread.id ? 'border-gold bg-white/5' : 'border-gold-dim/20 hover:border-gold-dim hover:bg-white/5'}`}>
-                                  <span className={`text-xs mt-1 transition-colors ${selectedThreadId === thread.id ? 'text-gold' : 'text-zinc-600 group-hover:text-gold'}`}>✦</span>
+                                  <span className={`text-xs mt-1 transition-colors ${selectedThreadId === thread.id ? 'text-gold' : 'text-gold-dim group-hover:text-gold'}`}>✦</span>
                                   <div>
                                      <p className={`font-display font-bold text-sm tracking-wide transition-colors ${selectedThreadId === thread.id ? 'text-bone drop-shadow' : 'text-parchment brightness-110'}`}>{thread.title}</p>
-                                     <span className="text-[9px] text-zinc-400 uppercase tracking-widest group-hover:text-zinc-300">Activo</span>
+                                     <span className="text-[10px] text-parchment-dim uppercase tracking-widest font-mono">Activo</span>
                                   </div>
                                </div>
                             ))}
@@ -1463,7 +1463,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                  <p className="text-parchment brightness-110 text-md italic font-serif leading-relaxed text-justify group-hover:text-bone transition-colors">"{fact.text}"</p>
                               </button>
                            ))}
-                           {gameState.worldFacts.length === 0 && <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-4">Mente en blanco.</p>}
+                           {gameState.worldFacts.length === 0 && <p className="text-parchment-dim text-xs uppercase tracking-widest text-center py-6 italic bg-black/20 rounded-xl border border-gold-dim/15">Mente en blanco.</p>}
                         </div>
                     </div>
                 </div>
@@ -1474,17 +1474,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
 
         {/* MOBILE TABS */}
         <div className="lg:hidden fixed bottom-4 left-4 right-4 h-16 bg-panel/95 backdrop-blur-md border border-gold-dim/40 rounded-2xl flex items-center justify-around z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('character'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-l-2xl transition-all ${mobileTab === 'character' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('character'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-l-2xl transition-all ${mobileTab === 'character' ? 'text-gold bg-white/5 font-bold' : 'text-parchment-dim hover:text-bone'}`}>
               <span className="text-lg mb-0.5">👤</span>
               <span className="text-[9px] uppercase tracking-widest font-display">Personaje</span>
            </button>
            <div className="w-px h-8 bg-gold-dim/20"></div>
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('narrative'); }} className={`flex flex-col items-center justify-center w-full h-full transition-all ${mobileTab === 'narrative' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('narrative'); }} className={`flex flex-col items-center justify-center w-full h-full transition-all ${mobileTab === 'narrative' ? 'text-gold bg-white/5 font-bold' : 'text-parchment-dim hover:text-bone'}`}>
               <span className="text-lg mb-0.5">📜</span>
               <span className="text-[9px] uppercase tracking-widest font-display">Crónica</span>
            </button>
            <div className="w-px h-8 bg-gold-dim/20"></div>
-           <button onClick={() => { audioSystem.playClick(); setMobileTab('inventory'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-r-2xl transition-all relative ${mobileTab === 'inventory' ? 'text-gold bg-white/5 font-bold' : 'text-zinc-500 hover:text-parchment'}`}>
+           <button onClick={() => { audioSystem.playClick(); setMobileTab('inventory'); }} className={`flex flex-col items-center justify-center w-full h-full rounded-r-2xl transition-all relative ${mobileTab === 'inventory' ? 'text-gold bg-white/5 font-bold' : 'text-parchment-dim hover:text-bone'}`}>
               <span className="text-lg mb-0.5">🎒</span>
               <div className="flex items-center gap-1">
                 <span className="text-[9px] uppercase tracking-widest font-display">Códice</span>
@@ -1542,12 +1542,12 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                <button onClick={() => handleEquipItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">EQUIPAR</button>
                <button onClick={() => handleInspectItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">EXAMINAR</button>
                <button onClick={() => handleCombineStart(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-gold hover:text-gold hover:bg-white/5 text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">COMBINAR</button>
-               <button onClick={() => handleDiscardItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-800 hover:border-blood hover:bg-blood/10 hover:text-blood-bright text-zinc-500 font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">DESCARTAR</button>
+               <button onClick={() => handleDiscardItem(activeItemObj.name)} disabled={isLoading} className="px-3 py-2.5 border border-zinc-700 hover:border-blood hover:bg-blood/20 hover:text-blood-bright text-parchment-dim font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-sm">DESCARTAR</button>
                <button onClick={() => { audioSystem.playClick(); setShowItemChat(true); }} disabled={isLoading} className="px-3 py-2.5 border border-gold/40 hover:bg-gold/10 hover:border-gold text-gold font-display text-xs tracking-[0.15em] font-bold transition-all rounded shadow-[0_0_10px_rgba(197,160,89,0.1)]">ACCIÓN LIBRE</button>
             </div>
             {showItemChat && (
               <div className="flex flex-col gap-2 animate-fade-in">
-                 <div className="text-[10px] text-gold uppercase tracking-widest mb-1 flex justify-between"><span>Acción con {activeItemObj.name}</span><button onClick={() => setShowItemChat(false)} className="underline text-zinc-500 hover:text-white">Volver</button></div>
+                 <div className="text-[10px] text-gold uppercase tracking-widest mb-1 flex justify-between"><span>Acción con {activeItemObj.name}</span><button onClick={() => setShowItemChat(false)} className="underline text-parchment-dim hover:text-gold">Volver</button></div>
                  <form onSubmit={handleItemChatSubmit}>
                     <input ref={itemChatInputRef} type="text" value={itemChatInput} onChange={(e) => setItemChatInput(e.target.value)} placeholder="¿Qué intentas hacer?" className="w-full bg-void border border-gold-dim/50 p-3 text-parchment text-sm font-serif italic focus:outline-none focus:border-gold rounded mb-2" />
                     <button type="submit" disabled={!itemChatInput.trim() || isLoading} className="w-full py-2 bg-gold/10 border border-gold/50 text-gold hover:bg-gold hover:text-void font-display uppercase text-xs font-bold tracking-widest transition-colors rounded">EJECUTAR</button>
@@ -1710,16 +1710,16 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                                  <span className="text-xs text-gold-dim uppercase tracking-wider font-bold">{entry.attribute}</span>
                               </div>
                               <div className="flex items-center gap-2 bg-black/20 p-2 rounded border border-white/5">
-                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[9px] text-zinc-500 uppercase">Dado</div><div className={`font-display font-bold ${isCrit ? 'text-gold' : isFumble ? 'text-blood-bright' : 'text-parchment'}`}>{entry.roll}</div></div>
-                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[9px] text-zinc-500 uppercase">Base</div><div className="text-parchment font-display">+{entry.modifier}</div></div>
-                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[9px] text-zinc-500 uppercase">Total</div><div className="text-bone font-display font-bold">{entry.total}</div></div>
-                                 <div className="flex-1 text-center"><div className="text-[9px] text-zinc-500 uppercase">Dificultad</div><div className="text-parchment-dim font-display">{entry.difficulty}</div></div>
+                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[10px] text-parchment-dim uppercase font-display font-bold">Dado</div><div className={`font-display font-bold ${isCrit ? 'text-gold' : isFumble ? 'text-blood-bright' : 'text-parchment'}`}>{entry.roll}</div></div>
+                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[10px] text-parchment-dim uppercase font-display font-bold">Base</div><div className="text-parchment font-display">+{entry.modifier}</div></div>
+                                 <div className="flex-1 text-center border-r border-white/5"><div className="text-[10px] text-parchment-dim uppercase font-display font-bold">Total</div><div className="text-bone font-display font-bold">{entry.total}</div></div>
+                                 <div className="flex-1 text-center"><div className="text-[10px] text-parchment-dim uppercase font-display font-bold">Dificultad</div><div className="text-parchment-dim font-display">{entry.difficulty}</div></div>
                               </div>
                            </div>
                         );
                      })
                   ) : (
-                     <div className="text-center py-10 text-zinc-600 italic font-serif">El destino aún no ha sido tentado.</div>
+                     <div className="text-center py-10 text-parchment-dim italic font-serif text-sm py-8 text-center">El destino aún no ha sido tentado.</div>
                   )}
                </div>
             </div>

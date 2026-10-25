@@ -110,7 +110,7 @@ const AudioController: React.FC<AudioControllerProps> = ({ variant = 'floating' 
            {/* Mute Button */}
            <button 
               onClick={handleMuteToggle}
-              className={`p-2 rounded-lg transition-colors uppercase text-xs tracking-[0.2em] font-bold flex items-center justify-center border border-transparent ${isMuted ? 'text-zinc-600 hover:text-zinc-400' : 'text-parchment-dim hover:text-gold hover:border-gold-dim/30 hover:bg-white/5'}`}
+              className={`p-2 rounded-lg transition-colors uppercase text-xs tracking-[0.2em] font-bold flex items-center justify-center border border-transparent ${isMuted ? 'text-parchment-dim/60 hover:text-parchment' : 'text-parchment-dim hover:text-gold hover:border-gold-dim/30 hover:bg-white/5'}`}
               title={isMuted ? "Activar Sonido" : "Silenciar"}
            >
               {isMuted ? (
@@ -264,7 +264,7 @@ const SettingsModal = ({ modalClass, masterVol, changeVolume, handleRandom, togg
                 `}
              >
                 <span>{layer.label}</span>
-                <span className={!mutedLayers[layer.id] ? 'text-gold' : 'text-zinc-600'}>
+                <span className={!mutedLayers[layer.id] ? 'text-gold' : 'text-parchment-dim/40'}>
                    ●
                 </span>
              </button>

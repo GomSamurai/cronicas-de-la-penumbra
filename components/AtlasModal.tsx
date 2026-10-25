@@ -138,10 +138,10 @@ const AtlasModal: React.FC<AtlasModalProps> = ({ isOpen, onClose, currentLocatio
             </div>
 
             {/* Bottom Legend */}
-            <div className="flex items-center gap-4 text-[10px] uppercase font-display text-zinc-500 pt-3 border-t border-gold-dim/10">
+            <div className="flex items-center gap-4 text-xs uppercase font-display text-parchment-dim font-medium pt-3 border-t border-gold-dim/20">
               <span className="flex items-center gap-1"><span className="text-gold">📍</span> Ubicación Presente</span>
               <span className="flex items-center gap-1"><span>🏛️</span> Enclave Visitado</span>
-              <span className="flex items-center gap-1"><span className="text-zinc-600">✣</span> Senderos de la Penumbra</span>
+              <span className="flex items-center gap-1"><span className="text-gold-dim font-bold">✣</span> Senderos de la Penumbra</span>
             </div>
 
           </div>

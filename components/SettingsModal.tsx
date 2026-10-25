@@ -11,6 +11,13 @@ import {
   NarrativeTextSize, 
   UiScale 
 } from '../services/typographyService';
+import { 
+  ThemeId, 
+  THEMES, 
+  getStoredTheme, 
+  applyTheme, 
+  ThemeDefinition 
+} from '../services/themeService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -29,7 +36,8 @@ export const getVisualEffectsSetting = (): boolean => {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-3.8-flash');
+  const [activeTheme, setActiveTheme] = useState<ThemeId>(getStoredTheme);
   const [visualEffects, setVisualEffects] = useState(true);
   const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>('normal');
   const [uiScale, setLocalUiScale] = useState<UiScale>('normal');
@@ -41,13 +49,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   // Testing connection state
   const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; model?: string } | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setApiKey(getCustomApiKey());
       setSelectedModel(getSelectedModel());
+      setActiveTheme(getStoredTheme());
       setVisualEffects(getVisualEffectsSetting());
       setNarrativeSize(getNarrativeTextSize());
       setLocalUiScale(getUiScale());
@@ -73,6 +82,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       localStorage.setItem('penumbra_visual_effects', String(visualEffects));
       setNarrativeTextSize(narrativeSize);
       setUiScale(uiScale);
+      applyTheme(activeTheme);
     } catch (e) {
       console.error("Error al guardar ajustes:", e);
     }
@@ -82,6 +92,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       setSaveSuccess(false);
       onClose();
     }, 800);
+  };
+
+  const handleSelectTheme = (themeId: ThemeId) => {
+    audioSystem.playClick();
+    setActiveTheme(themeId);
+    applyTheme(themeId);
   };
 
   const handleSelectNarrativeSize = (size: NarrativeTextSize) => {
@@ -257,23 +273,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
           {/* SECCIÓN 2: MODELO DE INTELIGENCIA NARRATIVA */}
           <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-3">
-            <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
-              Motor Narrativo (Modelo de Gemini)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
+                Motor Narrativo (Modelo de Gemini)
+              </label>
+              <span className="text-[10px] font-mono text-gold-dim bg-black/60 px-2 py-0.5 rounded border border-gold-dim/30">
+                Respaldo automático si falla
+              </span>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               {[
                 { 
-                  id: 'gemini-2.5-flash', 
-                  title: '2.5 Flash', 
-                  badge: 'Recomendado', 
-                  desc: 'Equilibrio perfecto entre velocidad (~1.5s) y coherencia grimdark.' 
-                },
-                { 
                   id: 'gemini-3.8-flash', 
                   title: '3.8 Flash', 
-                  badge: 'Vanguardia', 
-                  desc: 'Motor experimental con vocabulario más punzante y oscuro.' 
+                  badge: 'Por Defecto / Élite', 
+                  desc: 'Motor principal de máxima calidad literaria, vocabulario oscuro y coherencia.' 
+                },
+                { 
+                  id: 'gemini-2.5-flash', 
+                  title: '2.5 Flash', 
+                  badge: 'Respaldo Rápido', 
+                  desc: 'Respaldo ágil y estable por si 3.8 se satura o se requiere mínima latencia.' 
                 },
                 { 
                   id: 'gemini-2.5-pro', 
@@ -289,21 +310,110 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     setSelectedModel(item.id);
                     audioSystem.playClick();
                   }}
-                  className={`text-left p-3 rounded border transition-all flex flex-col justify-between ${
+                  className={`text-left p-3 rounded-xl border transition-all flex flex-col justify-between cursor-pointer ${
                     selectedModel === item.id 
-                      ? 'bg-gold/15 border-gold shadow-[0_0_15px_rgba(197,160,89,0.15)] text-bone' 
+                      ? 'bg-gold/20 border-gold shadow-[0_0_15px_rgba(197,160,89,0.25)] text-bone' 
                       : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-display font-bold text-xs text-bone">{item.title}</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.2 rounded bg-black/60 border border-gold-dim/30 text-gold-dim font-mono">
+                    <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-mono font-medium border ${
+                      item.id === 'gemini-3.8-flash'
+                        ? 'bg-amber-950/70 border-amber-500/50 text-amber-300'
+                        : 'bg-black/60 border-gold-dim/30 text-gold-dim'
+                    }`}>
                       {item.badge}
                     </span>
                   </div>
                   <p className="text-[11px] leading-snug opacity-90">{item.desc}</p>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* SECCIÓN 3: TEMAS VISUALES Y CONTRASTE */}
+          <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
+                  Ambientación Visual, Temas y Contraste
+                </label>
+                <p className="text-xs text-parchment-dim mt-0.5">
+                  Cambia en tiempo real entre paletas oscuras atmosféricas, códice de alto contraste o pergamino monacal claro.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {(Object.values(THEMES) as ThemeDefinition[]).map((theme) => {
+                const isSelected = activeTheme === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => handleSelectTheme(theme.id)}
+                    className={`text-left p-3 rounded-xl border transition-all flex flex-col justify-between cursor-pointer relative overflow-hidden group ${
+                      isSelected
+                        ? 'border-gold bg-gold/15 shadow-[0_0_15px_rgba(197,160,89,0.25)] scale-[1.01]'
+                        : 'border-gold-dim/25 bg-black/40 hover:border-gold-dim/60 hover:bg-white/5'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-display font-bold text-xs text-bone flex items-center gap-1.5">
+                          <span>{theme.name}</span>
+                        </span>
+                        <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-mono font-medium border ${
+                          theme.category === 'light'
+                            ? 'bg-amber-100/20 border-amber-300/40 text-amber-200'
+                            : theme.category === 'accessibility'
+                            ? 'bg-white/10 border-white/30 text-white'
+                            : 'bg-black/60 border-gold-dim/30 text-gold-dim'
+                        }`}>
+                          {theme.badge}
+                        </span>
+                      </div>
+
+                      {/* Live color palette pills */}
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span 
+                          className="w-4 h-4 rounded-full border border-white/20 shadow-sm shrink-0" 
+                          style={{ backgroundColor: theme.previewColors.bg }} 
+                          title="Fondo"
+                        />
+                        <span 
+                          className="w-4 h-4 rounded-full border border-white/20 shadow-sm shrink-0" 
+                          style={{ backgroundColor: theme.previewColors.card }} 
+                          title="Paneles"
+                        />
+                        <span 
+                          className="w-4 h-4 rounded-full border border-white/20 shadow-sm shrink-0" 
+                          style={{ backgroundColor: theme.previewColors.accent }} 
+                          title="Acento"
+                        />
+                        <span 
+                          className="w-4 h-4 rounded-full border border-white/20 shadow-sm shrink-0 flex items-center justify-center text-[9px] font-bold" 
+                          style={{ backgroundColor: theme.previewColors.card, color: theme.previewColors.text }} 
+                          title="Texto"
+                        >
+                          A
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] font-serif leading-tight text-parchment-dim">
+                        {theme.description}
+                      </p>
+                    </div>
+
+                    {isSelected && (
+                      <div className="mt-2 text-[10px] uppercase tracking-widest text-gold font-display font-bold flex items-center gap-1">
+                        <span>✓</span> Activo
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

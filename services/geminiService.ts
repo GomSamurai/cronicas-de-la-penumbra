@@ -10,9 +10,9 @@ export const getCustomApiKey = (): string => {
 
 export const getSelectedModel = (): string => {
   try {
-    return localStorage.getItem('penumbra_selected_model') || 'gemini-2.5-flash';
+    return localStorage.getItem('penumbra_selected_model') || 'gemini-3.8-flash';
   } catch {
-    return 'gemini-2.5-flash';
+    return 'gemini-3.8-flash';
   }
 };
 
