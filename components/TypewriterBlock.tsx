@@ -1,58 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { audioSystem } from '../services/audioService';
 import { 
-  getNarrativeTextSize, 
-  setNarrativeTextSize, 
+  getAllReadingPreferences,
   onTypographyChange, 
-  NARRATIVE_SIZES, 
-  NarrativeTextSize 
+  ReadingPreferences,
+  SPEED_MAP
 } from '../services/typographyService';
-
-export type ReadingSpeed = 'normal' | 'fast' | 'instant';
 
 interface TypewriterBlockProps {
   text: string;
   isLast: boolean;
   onComplete?: () => void;
+  onTypingStateChange?: (isTyping: boolean) => void;
 }
 
-const SPEED_MAP: Record<ReadingSpeed, number> = {
-  normal: 14,
-  fast: 5,
-  instant: 0,
-};
-
-const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onComplete }) => {
-  const [speedMode, setSpeedMode] = useState<ReadingSpeed>(() => {
-    try {
-      const saved = localStorage.getItem('penumbra_reading_speed') as ReadingSpeed;
-      return saved === 'normal' || saved === 'fast' || saved === 'instant' ? saved : 'normal';
-    } catch {
-      return 'normal';
-    }
-  });
-
-  const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>(getNarrativeTextSize);
+const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ 
+  text, 
+  isLast, 
+  onComplete,
+  onTypingStateChange 
+}) => {
+  const [prefs, setPrefs] = useState<ReadingPreferences>(getAllReadingPreferences);
 
   useEffect(() => {
-    return onTypographyChange(({ narrativeSize: newSize }) => {
-      setNarrativeSize(newSize);
+    return onTypographyChange((newPrefs) => {
+      setPrefs(newPrefs);
     });
   }, []);
 
+  const speedMode = prefs.readingSpeed;
   const [displayedLength, setDisplayedLength] = useState(() => (isLast && speedMode !== 'instant' ? 0 : text.length));
   const [isTyping, setIsTyping] = useState(() => isLast && speedMode !== 'instant');
   const intervalRef = useRef<number | null>(null);
 
-  const handleSetSpeed = (newSpeed: ReadingSpeed) => {
-    setSpeedMode(newSpeed);
-    try {
-      localStorage.setItem('penumbra_reading_speed', newSpeed);
-    } catch {}
-    if (newSpeed === 'instant' && isTyping) {
-      handleSkip();
+  useEffect(() => {
+    if (onTypingStateChange) {
+      onTypingStateChange(isTyping);
     }
-  };
+  }, [isTyping, onTypingStateChange]);
 
   const handleSkip = () => {
     if (intervalRef.current) {
@@ -64,12 +49,11 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
     if (onComplete) onComplete();
   };
 
-  // Keyboard shortcut: Space or Enter skips typing
+  // Keyboard shortcut: Space, Enter or Escape skips typing
   useEffect(() => {
     if (!isTyping) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input or textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -104,18 +88,18 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
     
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    const charDelay = SPEED_MAP[speedMode] || 14;
+    const charDelay = SPEED_MAP[speedMode]?.delay ?? 14;
 
     intervalRef.current = window.setInterval(() => {
       if (i < text.length) {
-        // Skip markdown bold tags instantly to prevent visible star glitch
+        // Skip markdown bold tags instantly to avoid visible double asterisk glitch
         if (text.charAt(i) === '*' && text.charAt(i + 1) === '*') {
           i += 2;
         } else {
           i += 1;
           const char = text.charAt(i - 1);
-          if (char !== ' ' && char !== '\n') {
-            if (Math.random() > 0.4) audioSystem.playTypingSound();
+          if (char !== ' ' && char !== '\n' && prefs.typingAudio) {
+            if (Math.random() > 0.45) audioSystem.playTypingSound();
           }
         }
         setDisplayedLength(i);
@@ -132,125 +116,65 @@ const TypewriterBlock: React.FC<TypewriterBlockProps> = ({ text, isLast, onCompl
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [text, isLast, speedMode]);
+  }, [text, isLast, speedMode, prefs.typingAudio]);
 
   const displayedText = text.slice(0, displayedLength);
   const paragraphs = displayedText.split('\n');
 
   return (
-    <div className="relative group/typewriter">
-      {/* READING SPEED & TYPOGRAPHY CONTROLS BAR (Only visible on the active/last passage) */}
-      {isLast && (
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-2 border-b border-gold-dim/15 text-[10px] uppercase font-display tracking-widest text-parchment-dim select-none">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Speed Controls */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-gold-dim">⚡ Lectura:</span>
-              <button
-                onClick={() => handleSetSpeed('normal')}
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'normal' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-                title="Velocidad habitual de la pluma"
-              >
-                1x
-              </button>
-              <button
-                onClick={() => handleSetSpeed('fast')}
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'fast' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-                title="Velocidad rápida"
-              >
-                2x
-              </button>
-              <button
-                onClick={() => handleSetSpeed('instant')}
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${speedMode === 'instant' ? 'bg-gold/20 text-gold font-bold border border-gold/40' : 'hover:text-parchment hover:bg-white/5'}`}
-                title="Texto revelado inmediatamente"
-              >
-                Directo
-              </button>
-            </div>
+    <div 
+      className={`relative select-text ${isTyping ? 'cursor-pointer' : ''}`}
+      onClick={isTyping ? handleSkip : undefined}
+      title={isTyping ? "Haz click o pulsa [Espacio] para revelar el pasaje de inmediato" : undefined}
+    >
+      {paragraphs.map((paragraph, idx) => {
+        if (paragraph.trim() === '') return null;
 
-            {/* Quick Typography Size Toggle */}
-            <div className="flex items-center gap-1 border-l border-gold-dim/30 pl-3">
-              <span className="text-gold-dim">🔤 Letra:</span>
-              {(['normal', 'large', 'huge'] as NarrativeTextSize[]).map((sizeKey) => {
-                const isAct = narrativeSize === sizeKey;
-                const cfg = NARRATIVE_SIZES[sizeKey];
+        const isFirstOfBlock = idx === 0;
+        const dropCapClass = (isFirstOfBlock && isLast && prefs.dropCap) ? 'drop-cap' : '';
+
+        // Repair incomplete markdown bold tags while streaming
+        const numStars = (paragraph.match(/\*\*/g) || []).length;
+        let safeParagraph = paragraph;
+        if (numStars % 2 !== 0) {
+          safeParagraph += '**';
+        }
+
+        const parts = safeParagraph.split(/(\*\*.*?\*\*)/g);
+
+        return (
+          <p 
+            key={idx} 
+            className={`mb-6 text-parchment tracking-wide transition-all duration-300 leading-relaxed ${dropCapClass}`}
+            style={{
+              fontSize: 'var(--penumbra-narrative-size, 1.25rem)',
+              lineHeight: 'var(--penumbra-narrative-line-height, 1.75)',
+              fontFamily: 'var(--penumbra-narrative-font, "Cormorant Garamond", serif)',
+              textAlign: prefs.alignment === 'justify' ? 'justify' : 'left'
+            }}
+          >
+            {parts.map((part, i) => {
+              if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
                 return (
-                  <button
-                    key={sizeKey}
-                    type="button"
-                    onClick={() => {
-                      audioSystem.playClick();
-                      setNarrativeTextSize(sizeKey);
-                    }}
-                    className={`px-2 py-0.5 rounded transition-all text-xs font-serif cursor-pointer ${
-                      isAct 
-                        ? 'bg-gold/25 text-gold font-bold border border-gold shadow-[0_0_8px_rgba(197,160,89,0.3)]' 
-                        : 'hover:text-parchment hover:bg-white/5 text-zinc-400 border border-transparent'
-                    }`}
-                    title={`Tamaño de letra: ${cfg.label} (${cfg.badge})`}
-                  >
-                    {sizeKey === 'normal' ? 'A' : sizeKey === 'large' ? 'A+' : 'A++'}
-                  </button>
+                  <strong key={i} className="text-bone font-bold drop-shadow-sm">
+                    {part.slice(2, -2)}
+                  </strong>
                 );
-              })}
-            </div>
-          </div>
+              }
+              if (part === '**') return null;
+              return part;
+            })}
 
-          {isTyping && (
-            <button
-              onClick={handleSkip}
-              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-void/80 hover:bg-gold/15 border border-gold-dim/40 hover:border-gold text-gold transition-all animate-pulse shadow-sm cursor-pointer"
-              title="Saltar animación (Espacio o Enter)"
-            >
-              <span>Revelar todo</span>
-              <span className="text-[9px] opacity-60 font-mono">[Espacio]</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* NARRATIVE TEXT PARAGRAPHS */}
-      <div onClick={isTyping ? handleSkip : undefined} className={isTyping ? 'cursor-pointer' : ''} title={isTyping ? "Click o pulsa Espacio para saltar animación" : ""}>
-        {paragraphs.map((paragraph, idx) => {
-          if (paragraph.trim() === '') return null;
-
-          const isFirstOfBlock = idx === 0;
-          const dropCapClass = (isFirstOfBlock && isLast) ? 'drop-cap' : '';
-
-          // Fix broken markdown tags if cut off midway through typing
-          const numStars = (paragraph.match(/\*\*/g) || []).length;
-          let safeParagraph = paragraph;
-          if (numStars % 2 !== 0) {
-            safeParagraph += '**';
-          }
-
-          const parts = safeParagraph.split(/(\*\*.*?\*\*)/g);
-
-          return (
-            <p 
-              key={idx} 
-              className={`mb-6 text-parchment font-serif tracking-wide text-justify transition-all duration-300 ${dropCapClass}`}
-              style={{
-                fontSize: 'var(--penumbra-narrative-size, 1.25rem)',
-                lineHeight: 'var(--penumbra-narrative-line-height, 1.75)'
-              }}
-            >
-              {parts.map((part, i) => {
-                if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-                  return <strong key={i} className="text-bone font-bold drop-shadow-sm">{part.slice(2, -2)}</strong>;
-                }
-                if (part === '**') return null;
-                return part;
-              })}
-              {/* Typewriter cursor */}
-              {isTyping && idx === paragraphs.length - 1 && (
-                <span className="inline-block w-2 h-4 bg-gold animate-pulse ml-1 align-middle shadow-[0_0_8px_rgba(197,160,89,0.8)]"></span>
-              )}
-            </p>
-          );
-        })}
-      </div>
+            {/* Subtle animated feather cursor during active typing */}
+            {isTyping && idx === paragraphs.length - 1 && (
+              <span 
+                className="inline-block w-2 h-4 bg-gold animate-pulse ml-1 align-middle shadow-[0_0_8px_rgba(197,160,89,0.8)]"
+                title="Escribiendo..."
+              />
+            )}
+          </p>
+        );
+      })}
     </div>
   );
 };

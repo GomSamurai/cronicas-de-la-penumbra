@@ -6,10 +6,29 @@ import {
   setNarrativeTextSize, 
   getUiScale, 
   setUiScale, 
+  getReadingSpeed,
+  setReadingSpeed,
+  getNarrativeFont,
+  setNarrativeFont,
+  getLineSpacing,
+  setLineSpacing,
+  getTextAlignment,
+  setTextAlignment,
+  getDropCapSetting,
+  setDropCapSetting,
+  getTypingAudioSetting,
+  setTypingAudioSetting,
   NARRATIVE_SIZES, 
   UI_SCALES, 
+  FONTS,
+  LINE_SPACINGS,
+  SPEED_MAP,
   NarrativeTextSize, 
-  UiScale 
+  UiScale,
+  ReadingSpeed,
+  NarrativeFont,
+  LineSpacing,
+  TextAlignment
 } from '../services/typographyService';
 import { 
   ThemeId, 
@@ -39,7 +58,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [selectedModel, setSelectedModel] = useState('gemini-3.8-flash');
   const [activeTheme, setActiveTheme] = useState<ThemeId>(getStoredTheme);
   const [visualEffects, setVisualEffects] = useState(true);
+
+  // Reading & Typography preferences
+  const [readingSpeed, setLocalReadingSpeed] = useState<ReadingSpeed>('normal');
+  const [narrativeFont, setLocalNarrativeFont] = useState<NarrativeFont>('garamond');
   const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>('normal');
+  const [lineSpacing, setLocalLineSpacing] = useState<LineSpacing>('normal');
+  const [textAlignment, setLocalTextAlignment] = useState<TextAlignment>('justify');
+  const [dropCap, setLocalDropCap] = useState(true);
+  const [typingAudio, setLocalTypingAudio] = useState(true);
   const [uiScale, setLocalUiScale] = useState<UiScale>('normal');
   
   // Audio state
@@ -58,8 +85,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       setSelectedModel(getSelectedModel());
       setActiveTheme(getStoredTheme());
       setVisualEffects(getVisualEffectsSetting());
+      
+      setLocalReadingSpeed(getReadingSpeed());
+      setLocalNarrativeFont(getNarrativeFont());
       setNarrativeSize(getNarrativeTextSize());
+      setLocalLineSpacing(getLineSpacing());
+      setLocalTextAlignment(getTextAlignment());
+      setLocalDropCap(getDropCapSetting());
+      setLocalTypingAudio(getTypingAudioSetting());
       setLocalUiScale(getUiScale());
+
       setVolume(audioSystem.getMasterVolume());
       setIsMuted(audioSystem.isMuted());
       setIsReactive(audioSystem.isReactive());
@@ -80,7 +115,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       }
       localStorage.setItem('penumbra_selected_model', selectedModel);
       localStorage.setItem('penumbra_visual_effects', String(visualEffects));
+      
+      setReadingSpeed(readingSpeed);
       setNarrativeTextSize(narrativeSize);
+      setNarrativeFont(narrativeFont);
+      setLineSpacing(lineSpacing);
+      setTextAlignment(textAlignment);
+      setDropCapSetting(dropCap);
+      setTypingAudioSetting(typingAudio);
       setUiScale(uiScale);
       applyTheme(activeTheme);
     } catch (e) {
@@ -91,19 +133,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setTimeout(() => {
       setSaveSuccess(false);
       onClose();
-    }, 800);
+    }, 600);
   };
 
   const handleSelectTheme = (themeId: ThemeId) => {
     audioSystem.playClick();
     setActiveTheme(themeId);
     applyTheme(themeId);
-  };
-
-  const handleSelectNarrativeSize = (size: NarrativeTextSize) => {
-    audioSystem.playClick();
-    setNarrativeSize(size);
-    setNarrativeTextSize(size);
   };
 
   const handleSelectUiScale = (scale: UiScale) => {
@@ -150,7 +186,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      <div className="relative bg-panel border border-gold-dim w-full max-w-2xl p-6 md:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-scale-up max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl text-parchment font-serif">
+      <div className="relative bg-panel border border-gold-dim w-full max-w-3xl p-6 md:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-scale-up max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl text-parchment font-serif">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gold-dim/30 pb-4 mb-6">
@@ -161,13 +197,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 Ajustes de la Vigilia
               </h2>
               <p className="text-xs text-parchment-dim tracking-wider uppercase font-display">
-                Configuración del Éter, Rendimiento y Sensaciones
+                Configuración del Éter, Lectura Inmersiva y Tipografía
               </p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-zinc-500 hover:text-gold transition-colors text-xl font-bold px-2 py-1"
+            className="text-zinc-500 hover:text-gold transition-colors text-xl font-bold px-2 py-1 cursor-pointer"
             title="Cerrar"
           >
             ✕
@@ -209,7 +245,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   <button
                     type="button"
                     onClick={() => setApiKey('')}
-                    className="text-[10px] uppercase text-zinc-400 hover:text-red-400 px-1.5 py-1"
+                    className="text-[10px] uppercase text-zinc-400 hover:text-red-400 px-1.5 py-1 cursor-pointer"
                     title="Borrar clave (usar servidor)"
                   >
                     Borrar
@@ -218,7 +254,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={() => setShowKey(!showKey)}
-                  className="text-xs text-zinc-400 hover:text-gold px-2 py-1"
+                  className="text-xs text-zinc-400 hover:text-gold px-2 py-1 cursor-pointer"
                   title={showKey ? 'Ocultar' : 'Mostrar'}
                 >
                   {showKey ? '🙈' : '👁️'}
@@ -232,7 +268,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={handleTestKey}
                 disabled={isTesting}
-                className="px-3 py-1.5 bg-panel border border-gold-dim/40 hover:border-gold hover:text-gold text-xs font-display uppercase tracking-widest transition-all rounded disabled:opacity-50 flex items-center gap-2"
+                className="px-3 py-1.5 bg-panel border border-gold-dim/40 hover:border-gold hover:text-gold text-xs font-display uppercase tracking-widest transition-all rounded disabled:opacity-50 flex items-center gap-2 cursor-pointer"
               >
                 {isTesting ? (
                   <>
@@ -417,7 +453,321 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* SECCIÓN 3: EFECTOS VISCERALES Y ACCESIBILIDAD */}
+          {/* SECCIÓN 4: PERSONALIZACIÓN TIPOGRÁFICA Y LECTURA DEL CÓDICE */}
+          <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-4">
+            <div>
+              <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
+                Experiencia de Lectura, Tipografía y Códice
+              </label>
+              <p className="text-xs text-parchment-dim mt-0.5">
+                Personaliza la velocidad del flujo narrativo, la tipografía gótica histórica, el espaciado y los detalles del manuscrito.
+              </p>
+            </div>
+
+            {/* 1. Velocidad de Revelado de la Crónica */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                  <span>⚡</span>
+                  <span>Velocidad de Escritura (Mecanografiado)</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  {SPEED_MAP[readingSpeed].label} ({SPEED_MAP[readingSpeed].badge})
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(SPEED_MAP) as ReadingSpeed[]).map((key) => {
+                  const item = SPEED_MAP[key];
+                  const isSelected = readingSpeed === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        audioSystem.playClick();
+                        setLocalReadingSpeed(key);
+                        setReadingSpeed(key);
+                      }}
+                      className={`text-center py-2 px-2.5 rounded-xl border transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
+                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
+                      }`}
+                    >
+                      <div className="text-xs font-display font-bold">{item.label}</div>
+                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Tipografía Histórica del Manuscrito */}
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                  <span>✒️</span>
+                  <span>Familia Tipográfica Narrativa</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  {FONTS[narrativeFont].badge}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {(Object.keys(FONTS) as NarrativeFont[]).map((key) => {
+                  const font = FONTS[key];
+                  const isSelected = narrativeFont === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        audioSystem.playClick();
+                        setLocalNarrativeFont(key);
+                        setNarrativeFont(key);
+                      }}
+                      className={`text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected 
+                          ? 'bg-gold/20 border-gold shadow-[0_0_12px_rgba(197,160,89,0.25)] text-bone' 
+                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold font-display text-bone" style={{ fontFamily: font.fontFamily }}>
+                            {font.name}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-serif leading-tight opacity-80 line-clamp-2">
+                          {font.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <span className="text-[9px] uppercase tracking-widest text-gold font-display font-bold mt-2">
+                          ✓ Seleccionada
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Tamaño de Letra e Interlineado */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+              {/* Tamaño */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                    <span>🔤</span>
+                    <span>Tamaño de Letra</span>
+                  </span>
+                  <span className="text-[10px] uppercase font-mono text-gold font-bold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                    {NARRATIVE_SIZES[narrativeSize].label} ({NARRATIVE_SIZES[narrativeSize].badge})
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.keys(NARRATIVE_SIZES) as NarrativeTextSize[]).map((key) => {
+                    const item = NARRATIVE_SIZES[key];
+                    const isSelected = narrativeSize === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          audioSystem.playClick();
+                          setNarrativeSize(key);
+                          setNarrativeTextSize(key);
+                        }}
+                        className={`text-center py-2 rounded-lg border transition-all cursor-pointer ${
+                          isSelected 
+                            ? 'bg-gold/25 border-gold text-bone font-bold' 
+                            : 'bg-black/40 border-gold-dim/20 text-parchment-dim hover:text-parchment'
+                        }`}
+                      >
+                        <div className="text-xs font-display font-bold">{item.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Interlineado */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                    <span>≡</span>
+                    <span>Interlineado / Espacio</span>
+                  </span>
+                  <span className="text-[10px] uppercase font-mono text-gold font-bold px-1.5 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                    {LINE_SPACINGS[lineSpacing].label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(Object.keys(LINE_SPACINGS) as LineSpacing[]).map((key) => {
+                    const item = LINE_SPACINGS[key];
+                    const isSelected = lineSpacing === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          audioSystem.playClick();
+                          setLocalLineSpacing(key);
+                          setLineSpacing(key);
+                        }}
+                        className={`text-center py-2 rounded-lg border transition-all cursor-pointer ${
+                          isSelected 
+                            ? 'bg-gold/25 border-gold text-bone font-bold' 
+                            : 'bg-black/40 border-gold-dim/20 text-parchment-dim hover:text-parchment'
+                        }`}
+                      >
+                        <div className="text-xs font-display font-bold">{item.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Alineación y Detalles Históricos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+              {/* Alineación */}
+              <div className="space-y-2">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold block">
+                  Alineación de Texto
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioSystem.playClick();
+                      setLocalTextAlignment('justify');
+                      setTextAlignment('justify');
+                    }}
+                    className={`py-2 px-3 rounded-lg border text-xs font-display uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      textAlignment === 'justify'
+                        ? 'bg-gold/25 border-gold text-bone font-bold'
+                        : 'bg-black/40 border-gold-dim/20 text-parchment-dim hover:text-parchment'
+                    }`}
+                  >
+                    <span>📜</span>
+                    <span>Justificado</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioSystem.playClick();
+                      setLocalTextAlignment('left');
+                      setTextAlignment('left');
+                    }}
+                    className={`py-2 px-3 rounded-lg border text-xs font-display uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      textAlignment === 'left'
+                        ? 'bg-gold/25 border-gold text-bone font-bold'
+                        : 'bg-black/40 border-gold-dim/20 text-parchment-dim hover:text-parchment'
+                    }`}
+                  >
+                    <span>📄</span>
+                    <span>Izquierda</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Toggles: Capitular & Audio */}
+              <div className="space-y-2">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold block">
+                  Detalles del Manuscrito
+                </span>
+                <div className="flex items-center gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-parchment">
+                    <input
+                      type="checkbox"
+                      checked={dropCap}
+                      onChange={(e) => {
+                        audioSystem.playClick();
+                        setLocalDropCap(e.target.checked);
+                        setDropCapSetting(e.target.checked);
+                      }}
+                      className="accent-[#c5a059] w-4 h-4 rounded cursor-pointer"
+                    />
+                    <span>Capitular Gótica</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-parchment">
+                    <input
+                      type="checkbox"
+                      checked={typingAudio}
+                      onChange={(e) => {
+                        audioSystem.playClick();
+                        setLocalTypingAudio(e.target.checked);
+                        setTypingAudioSetting(e.target.checked);
+                      }}
+                      className="accent-[#c5a059] w-4 h-4 rounded cursor-pointer"
+                    />
+                    <span>Audio de Pluma</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Escala Global de la Interfaz */}
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
+                  <span>🖥️</span>
+                  <span>Escala Global de Interfaz (Zoom UI)</span>
+                </span>
+                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
+                  {UI_SCALES[uiScale].label}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(UI_SCALES) as UiScale[]).map((key) => {
+                  const item = UI_SCALES[key];
+                  const isSelected = uiScale === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectUiScale(key)}
+                      className={`text-center py-2 px-2.5 rounded border transition-all cursor-pointer ${
+                        isSelected 
+                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
+                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
+                      }`}
+                    >
+                      <div className="text-xs font-display font-bold">{item.label}</div>
+                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 6. Vista Previa en Vivo Interactiva */}
+            <div className="bg-black/60 border border-gold-dim/35 rounded-xl p-4 text-parchment transition-all duration-300 shadow-inner">
+              <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gold-dim/20">
+                <span className="text-[9px] uppercase tracking-widest font-display text-gold-dim font-bold not-italic">
+                  Manuscrito de Muestra en Tiempo Real:
+                </span>
+                <span className="text-[10px] font-mono text-parchment-dim">
+                  {FONTS[narrativeFont].name} • {NARRATIVE_SIZES[narrativeSize].label} • {LINE_SPACINGS[lineSpacing].label}
+                </span>
+              </div>
+              <p 
+                style={{ 
+                  fontSize: NARRATIVE_SIZES[narrativeSize].sampleFontSize, 
+                  lineHeight: LINE_SPACINGS[lineSpacing].value,
+                  fontFamily: FONTS[narrativeFont].fontFamily,
+                  textAlign: textAlignment === 'justify' ? 'justify' : 'left'
+                }} 
+                className={`text-stone-200 transition-all ${dropCap ? 'drop-cap' : ''}`}
+              >
+                "El eco de tus pasos despierta a las sombras dormidas en las criptas. Un susurro helado recorre el aire..."
+              </p>
+            </div>
+          </div>
+
+          {/* SECCIÓN 5: EFECTOS VISCERALES Y ACCESIBILIDAD */}
           <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -435,7 +785,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   setVisualEffects(!visualEffects);
                   audioSystem.playClick();
                 }}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors border ${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors border cursor-pointer ${
                   visualEffects 
                     ? 'bg-gold/30 border-gold' 
                     : 'bg-zinc-900 border-zinc-700'
@@ -451,7 +801,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* SECCIÓN 4: AUDIO Y PAISAJE SONORO */}
+          {/* SECCIÓN 6: AUDIO Y PAISAJE SONORO */}
           <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs uppercase font-display tracking-widest text-gold font-bold">
@@ -461,7 +811,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={handleToggleMute}
-                  className={`text-xs px-2.5 py-1 rounded border transition-all ${
+                  className={`text-xs px-2.5 py-1 rounded border transition-all cursor-pointer ${
                     isMuted 
                       ? 'border-red-500 text-red-400 bg-red-950/20 font-bold' 
                       : 'border-gold-dim/40 text-parchment hover:border-gold'
@@ -472,7 +822,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={handleToggleReactive}
-                  className={`text-xs px-2.5 py-1 rounded border transition-all ${
+                  className={`text-xs px-2.5 py-1 rounded border transition-all cursor-pointer ${
                     isReactive 
                       ? 'border-gold text-gold bg-gold/10' 
                       : 'border-zinc-700 text-zinc-500'
@@ -501,101 +851,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* SECCIÓN 5: ACCESIBILIDAD Y TIPOGRAFÍA */}
-          <div className="bg-void/60 border border-gold-dim/20 rounded-lg p-4 space-y-4">
-            <div>
-              <label className="text-xs uppercase font-display tracking-widest text-gold font-bold block">
-                Accesibilidad y Tipografía
-              </label>
-              <p className="text-xs text-parchment-dim mt-0.5">
-                Calibra el tamaño de los textos y la proporción de la interfaz para una lectura descansada y nítida.
-              </p>
-            </div>
-
-            {/* Subsección 1: Tamaño de Lectura de la Crónica */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
-                  <span>📖</span>
-                  <span>Texto Narrativo (Crónica y Pasajes)</span>
-                </span>
-                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
-                  {NARRATIVE_SIZES[narrativeSize].label} ({NARRATIVE_SIZES[narrativeSize].badge})
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(NARRATIVE_SIZES) as NarrativeTextSize[]).map((key) => {
-                  const item = NARRATIVE_SIZES[key];
-                  const isSelected = narrativeSize === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => handleSelectNarrativeSize(key)}
-                      className={`text-center py-2 px-2.5 rounded border transition-all cursor-pointer ${
-                        isSelected 
-                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
-                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
-                      }`}
-                    >
-                      <div className="text-xs font-display font-bold">{item.label}</div>
-                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Vista Previa en Vivo */}
-              <div className="bg-black/50 border border-gold-dim/30 rounded-lg p-3 text-parchment font-serif italic transition-all duration-300">
-                <span className="text-[9px] uppercase tracking-widest font-display text-gold-dim block mb-1 font-bold not-italic">
-                  Muestra en tiempo real:
-                </span>
-                <p style={{ fontSize: NARRATIVE_SIZES[narrativeSize].sampleFontSize, lineHeight: '1.6' }} className="text-stone-200">
-                  "El eco de tus pasos despierta a las sombras dormidas en las criptas. Un susurro helado recorre el aire..."
-                </p>
-              </div>
-            </div>
-
-            {/* Subsección 2: Escala General de la Interfaz */}
-            <div className="space-y-2 pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-display uppercase tracking-wider text-bone font-bold flex items-center gap-1.5">
-                  <span>🖥️</span>
-                  <span>Escala Global de Interfaz (Zoom UI)</span>
-                </span>
-                <span className="text-[10px] uppercase font-mono text-gold font-bold px-2 py-0.5 rounded bg-black/60 border border-gold-dim/40">
-                  {UI_SCALES[uiScale].label}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(UI_SCALES) as UiScale[]).map((key) => {
-                  const item = UI_SCALES[key];
-                  const isSelected = uiScale === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => handleSelectUiScale(key)}
-                      className={`text-center py-2 px-2.5 rounded border transition-all cursor-pointer ${
-                        isSelected 
-                          ? 'bg-gold/25 border-gold shadow-[0_0_12px_rgba(197,160,89,0.3)] text-bone font-bold' 
-                          : 'bg-black/40 border-gold-dim/20 hover:border-gold-dim/50 text-parchment-dim hover:text-parchment'
-                      }`}
-                    >
-                      <div className="text-xs font-display font-bold">{item.label}</div>
-                      <div className="text-[10px] font-mono text-gold-dim mt-0.5">{item.badge}</div>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-zinc-500 font-serif italic">
-                Ajusta proporcionalmente los botones, fichas, paneles y textos secundarios en toda la aplicación.
-              </p>
-            </div>
-          </div>
-
         </div>
 
         {/* Footer Actions */}
@@ -608,14 +863,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-zinc-700 hover:border-zinc-500 text-xs font-display uppercase tracking-widest text-parchment-dim transition-all rounded"
+              className="px-4 py-2 border border-zinc-700 hover:border-zinc-500 text-xs font-display uppercase tracking-widest text-parchment-dim transition-all rounded cursor-pointer"
             >
               Cerrar
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-6 py-2 bg-gradient-to-r from-gold-dim via-gold to-gold-dim text-void font-display font-bold text-xs uppercase tracking-widest transition-all rounded hover:brightness-110 shadow-[0_0_20px_rgba(197,160,89,0.3)] flex items-center gap-2"
+              className="px-6 py-2 bg-gradient-to-r from-gold-dim via-gold to-gold-dim text-void font-display font-bold text-xs uppercase tracking-widest transition-all rounded hover:brightness-110 shadow-[0_0_20px_rgba(197,160,89,0.3)] flex items-center gap-2 cursor-pointer"
             >
               {saveSuccess ? (
                 <>

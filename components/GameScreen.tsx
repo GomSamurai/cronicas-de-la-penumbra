@@ -9,8 +9,12 @@ import AtlasModal from './AtlasModal';
 import { 
   getNarrativeTextSize, 
   cycleNarrativeTextSize, 
+  getReadingSpeed,
+  cycleReadingSpeed,
   onTypographyChange, 
-  NarrativeTextSize 
+  NarrativeTextSize,
+  ReadingSpeed,
+  SPEED_MAP 
 } from '../services/typographyService';
 
 interface GameScreenProps {
@@ -42,6 +46,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [visualEffectsEnabled, setVisualEffectsEnabled] = useState(getVisualEffectsSetting());
   const [narrativeSize, setNarrativeSize] = useState<NarrativeTextSize>(getNarrativeTextSize);
+  const [readingSpeed, setReadingSpeedState] = useState<ReadingSpeed>(getReadingSpeed);
+  const [isNarrativeTyping, setIsNarrativeTyping] = useState(false);
   const [showDiceLog, setShowDiceLog] = useState(false);
   const [showAtlasModal, setShowAtlasModal] = useState(false);
   const [whisperIdx, setWhisperIdx] = useState(0);
@@ -95,10 +101,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
   // Game Over State
   const isDead = gameState.hp <= 0;
 
-  // Listen for typography scale updates
+  // Listen for typography and reading preferences updates
   useEffect(() => {
-    return onTypographyChange(({ narrativeSize: newSize }) => {
-      setNarrativeSize(newSize);
+    return onTypographyChange((prefs) => {
+      setNarrativeSize(prefs.narrativeSize);
+      setReadingSpeedState(prefs.readingSpeed);
     });
   }, []);
 
@@ -766,9 +773,40 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
            )}
         </div>
         
-        <div className="flex items-center gap-2.5 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
+           {/* Quick Skip/Reveal Button during active typewriter animation */}
+           {isNarrativeTyping && (
+             <button
+               type="button"
+               onClick={() => {
+                 window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+               }}
+               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gold/20 hover:bg-gold/30 border border-gold text-gold font-display text-[10px] uppercase tracking-wider font-bold animate-pulse transition-all cursor-pointer shadow-[0_0_12px_rgba(197,160,89,0.3)] shrink-0"
+               title="Revelar todo el texto de este pasaje de inmediato (o pulsa la barra espaciadora)"
+             >
+               <span>⏭️</span>
+               <span className="hidden sm:inline">Revelar</span>
+               <span className="text-[9px] opacity-70 font-mono hidden md:inline">[Espacio]</span>
+             </button>
+           )}
+
+           {/* Quick Reading Speed Control */}
+           <button
+             type="button"
+             onClick={() => {
+               audioSystem.playClick();
+               const next = cycleReadingSpeed();
+               setReadingSpeedState(next);
+             }}
+             className="flex items-center gap-1 px-2 py-1 rounded-lg bg-black/60 border border-gold-dim/40 hover:border-gold text-parchment-dim hover:text-gold transition-all text-xs font-display uppercase tracking-wider font-bold cursor-pointer shrink-0"
+             title={`Velocidad de escritura: ${SPEED_MAP[readingSpeed].label} (Click para alternar: 1x, 2x, Directo)`}
+           >
+             <span className="text-gold text-xs">⚡</span>
+             <span className="text-bone font-mono font-bold text-[11px]">{SPEED_MAP[readingSpeed].badge}</span>
+           </button>
+
            {/* Quick Typography Scale Control */}
-           <div className="flex items-center bg-black/60 border border-gold-dim/40 rounded-lg p-0.5 shadow-inner" title="Tamaño de lectura de la Crónica">
+           <div className="flex items-center bg-black/60 border border-gold-dim/40 rounded-lg p-0.5 shadow-inner shrink-0" title="Tamaño de lectura de la Crónica">
              <button
                type="button"
                onClick={() => {
@@ -781,8 +819,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
              >
                A⁻
              </button>
-             <span className="text-[10px] font-mono font-bold text-gold px-1 select-none">
-               {narrativeSize === 'normal' ? '1x' : narrativeSize === 'large' ? '1.2x' : '1.4x'}
+             <span className="text-[10px] font-mono font-bold text-gold px-1.5 select-none">
+               {narrativeSize === 'normal' ? 'A' : narrativeSize === 'large' ? 'A+' : 'A++'}
              </span>
              <button
                type="button"
@@ -1096,56 +1134,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                    <div className="mt-16 text-gold/60 text-xs tracking-[0.3em] uppercase">— Inicio de la Crónica —</div>
                 </div>
 
-                {/* --- CARTOGRAFÍA Y ENTORNO VISIBLE --- */}
-                {gameState.currentLocation && (
-                  <div className="mb-10 p-5 bg-void/80 border border-gold-dim/40 rounded-xl shadow-lg backdrop-blur-md animate-fade-in relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-gold-dim to-transparent opacity-40"></div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gold-dim/20 pb-2 mb-3">
-                       <div className="flex items-center gap-2">
-                          <span className="text-gold text-lg">🏛️</span>
-                          <h3 className="text-bone font-display font-bold text-lg tracking-wide">{gameState.currentLocation.name}</h3>
-                       </div>
-                       <div className="flex items-center gap-2">
-                          <span className="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded border border-white/10 bg-panel text-parchment-dim">
-                             {gameState.currentLocation.lighting === 'oscuridad_total' ? '🌑 Oscuridad Total' :
-                              gameState.currentLocation.lighting === 'penumbra' ? '🕯️ Penumbra' :
-                              gameState.currentLocation.lighting === 'antorchas' ? '🔥 Antorchas' : '☀️ Luz Gris'}
-                          </span>
-                          <span className={`text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded border font-bold ${
-                             gameState.currentLocation.dangerLevel === 'letal' ? 'border-blood text-blood-bright bg-blood/10 animate-pulse' :
-                             gameState.currentLocation.dangerLevel === 'inquietante' ? 'border-gold-dim text-gold bg-gold/10' :
-                             'border-zinc-700 text-zinc-400 bg-zinc-900'
-                          }`}>
-                             {gameState.currentLocation.dangerLevel === 'letal' ? '☠️ Letal' :
-                              gameState.currentLocation.dangerLevel === 'inquietante' ? '⚠️ Inquietante' : '🛡️ Seguro'}
-                          </span>
-                       </div>
-                    </div>
-                    <p className="text-sm md:text-base font-serif italic text-parchment-dim leading-relaxed mb-3">
-                       {gameState.currentLocation.description}
-                    </p>
-                    {gameState.currentLocation.exits && gameState.currentLocation.exits.length > 0 && (
-                       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
-                          <span className="text-[9px] uppercase tracking-widest text-gold-dim font-display font-bold mr-1">Salidas Visibles:</span>
-                          {gameState.currentLocation.exits.map((exit, eIdx) => (
-                             <button
-                                key={eIdx}
-                                onClick={() => {
-                                   audioSystem.playClick();
-                                   onAction(`[DIRIGIRSE A] ${exit}`);
-                                }}
-                                disabled={isLoading || isDead}
-                                className="text-xs font-serif text-parchment hover:text-gold bg-panel hover:bg-gold/10 border border-gold-dim/30 hover:border-gold px-2.5 py-1 rounded transition-all disabled:opacity-50 group flex items-center gap-1 shadow-sm"
-                                title="Avanzar por esta salida"
-                             >
-                                <span className="text-gold-dim group-hover:text-gold">↳</span>
-                                <span>{exit}</span>
-                             </button>
-                          ))}
-                       </div>
-                    )}
-                  </div>
-                )}
+
 
                 {/* 
                    DYNAMIC CONTAINER FOR TEXT EFFECTS 
@@ -1169,7 +1158,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                     return (
                       <div key={index} ref={el => { turnRefs.current[index] = el; if (isLast) lastTurnRef.current = el; }} className={`mb-12 transition-all duration-1000 p-4 rounded-xl ${!isLast ? 'opacity-70' : 'opacity-100 animate-fade-in'}`}>
                          {isLast && index > 0 && <div className="flex justify-center mb-10 opacity-40"><div className="text-gold-dim text-xl">❖</div></div>}
-                         <TypewriterBlock text={turn.narrative} isLast={isLast} />
+                         <TypewriterBlock text={turn.narrative} isLast={isLast} onTypingStateChange={isLast ? setIsNarrativeTyping : undefined} />
                       </div>
                     );
                   })}
@@ -1281,6 +1270,49 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, onAction, onRegister
                          })}
                       </div>
                    )}
+
+                   {/* SENDEROS FÍSICOS Y SALIDAS DEL ENCLAVE (Solo tras la lectura, junto a las decisiones) */}
+                   {gameState.currentLocation?.exits && gameState.currentLocation.exits.length > 0 && (
+                      <div className="mb-5 p-3.5 bg-black/40 border border-gold-dim/25 rounded-xl shadow-inner">
+                         <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gold-dim/15">
+                            <div className="flex items-center gap-2">
+                               <span className="text-gold text-xs">🧭</span>
+                               <span className="text-[11px] uppercase tracking-widest text-gold font-display font-bold">
+                                  Senderos y Salidas del Enclave
+                                </span>
+                                <span className="text-[10px] text-parchment-dim font-serif italic hidden sm:inline">
+                                  ({gameState.currentLocation.name})
+                               </span>
+                            </div>
+                            <button
+                               type="button"
+                               onClick={() => { audioSystem.playClick(); setShowAtlasModal(true); }}
+                               className="text-[10px] text-parchment-dim hover:text-gold uppercase tracking-wider font-display flex items-center gap-1 transition-colors cursor-pointer"
+                               title="Abrir Atlas Cartográfico Mental"
+                            >
+                               <span>🗺️ Atlas</span>
+                            </button>
+                         </div>
+                         <div className="flex flex-wrap gap-2">
+                            {gameState.currentLocation.exits.map((exit, eIdx) => (
+                               <button
+                                  key={eIdx}
+                                  onClick={() => {
+                                     audioSystem.playClick();
+                                     onAction(`[DIRIGIRSE A] ${exit}`);
+                                  }}
+                                  disabled={isLoading || isDead}
+                                  className="text-xs font-serif text-parchment hover:text-gold bg-black/50 hover:bg-gold/15 border border-gold-dim/30 hover:border-gold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 group flex items-center gap-1.5 shadow-sm cursor-pointer"
+                                  title={`Avanzar hacia: ${exit}`}
+                               >
+                                  <span className="text-gold-dim group-hover:text-gold font-bold">↳</span>
+                                  <span>{exit}</span>
+                               </button>
+                            ))}
+                         </div>
+                      </div>
+                   )}
+
                    <form onSubmit={handleSendCustom} className="relative">
                       <input type="text" value={customInput} onChange={(e) => setCustomInput(e.target.value)} disabled={isLoading} placeholder="Describe tu acción..." className="w-full bg-void border border-gold-dim/30 py-3 pl-4 pr-12 text-lg text-bone placeholder-zinc-700 focus:outline-none focus:border-gold transition-colors font-serif italic rounded-lg" />
                       <button type="submit" disabled={!customInput.trim() || isLoading} className="absolute right-2 top-1/2 -translate-y-1/2 text-gold hover:text-white disabled:opacity-0 transition-opacity p-2">⏎</button>
